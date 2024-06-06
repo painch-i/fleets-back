@@ -1,0 +1,16 @@
+{
+  "short_name": "Fleets",
+  "name": "Fleets App",
+  "icons": [
+    {
+      "src": "./assets/logos/logo-round.webp",
+      "type": "image/webp",
+      "sizes": "144x144",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff"
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Fleets</string>
+    <string name="title_activity_main">Fleets</string>
+    <string name="package_name">com.fleets.ionic</string>
+    <string name="custom_url_scheme">com.fleets.ionic</string>
+</resources>

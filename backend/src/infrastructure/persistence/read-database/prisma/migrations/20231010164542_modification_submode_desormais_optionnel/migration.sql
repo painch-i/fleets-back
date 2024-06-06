@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Line" ALTER COLUMN "subMode" DROP NOT NULL;

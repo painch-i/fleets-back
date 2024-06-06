@@ -1,0 +1,1 @@
+export type ErrorCode = 'VALIDATION_ERROR' | 'CONSTRAINT_VIOLATION';

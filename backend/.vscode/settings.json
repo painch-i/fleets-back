@@ -1,0 +1,11 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": true,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "$(capture).*.ts,$(capture).*.tsx"
+  },
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "never"
+  }
+}

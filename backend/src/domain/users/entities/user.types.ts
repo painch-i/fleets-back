@@ -1,0 +1,71 @@
+import { $Enums, Prisma } from '@prisma/client';
+import { z } from 'zod';
+import { findByEmailOptionsSchema } from '../validation/find-by-email-options.schema';
+import { GenderEnum } from '../value-objects/gender.value-object';
+import { completeRegistrationOptionsSchema } from '../validation/complete-registration-options.schema';
+import { verifyOTPOptionsSchema } from '../validation/verify-otp-options.schema';
+
+type UserRelationWithCount = keyof Prisma.UserInclude;
+type UserRelation = Exclude<UserRelationWithCount, '_count'>;
+type UserIncludeAll = {
+  [P in UserRelation]: true;
+};
+// 2: This type will include many users and all their cars
+type UserWithRelations = Prisma.UserGetPayload<{
+  include: UserIncludeAll;
+}> & { memberships: UserMembershipWithOptionalRelations[] };
+
+export type UserWithOptionalRelations = Omit<UserWithRelations, UserRelation> &
+  Partial<Pick<UserWithRelations, UserRelation>>;
+
+type UserMembershipRelationWithCount = keyof Prisma.UserMembershipInclude;
+type UserMembershipRelation = Exclude<
+  UserMembershipRelationWithCount,
+  '_count'
+>;
+type UserMembershipIncludeAll = {
+  [P in UserMembershipRelation]: true;
+};
+// 2: This type will include many users and all their cars
+type UserMembershipWithRelations = Prisma.UserMembershipGetPayload<{
+  include: UserMembershipIncludeAll;
+}>;
+
+export type UserMembershipWithOptionalRelations = Omit<
+  UserMembershipWithRelations,
+  UserMembershipRelation
+> &
+  Partial<Pick<UserMembershipWithRelations, UserMembershipRelation>>;
+
+export enum VerificationStatus {
+  NOT_STARTED = 'NOT_STARTED',
+  PENDING = 'PENDING',
+  VERIFIED = 'VERIFIED',
+  INVALID = 'INVALID',
+}
+
+export const GenderEnumFromDatabase: Record<$Enums.Gender, GenderEnum> = {
+  [$Enums.Gender.MALE]: GenderEnum.MALE,
+  [$Enums.Gender.FEMALE]: GenderEnum.FEMALE,
+};
+
+export const GenderEnumToDatabase: Record<GenderEnum, $Enums.Gender> = {
+  [GenderEnum.MALE]: $Enums.Gender.MALE,
+  [GenderEnum.FEMALE]: $Enums.Gender.FEMALE,
+};
+
+export type FindUserByEmailOptions = z.infer<typeof findByEmailOptionsSchema>;
+
+export type CreateUserOptions = {
+  email: string;
+  gender: GenderEnum;
+  firstName: string;
+  lastName: string;
+  birthDate: Date;
+};
+
+export type CompleteRegistrationOptions = z.infer<
+  typeof completeRegistrationOptionsSchema
+>;
+
+export type VerifyOTPOptions = z.infer<typeof verifyOTPOptionsSchema>;
