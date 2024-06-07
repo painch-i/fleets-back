@@ -9,7 +9,7 @@
     "assets": [
       {
         "include": "../static",
-        "outDir": "dist/static",
+        "outDir": "build/static",
         "watchAssets": true
       }
     ],
