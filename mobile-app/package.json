@@ -1,5 +1,5 @@
 {
-  "name": "Fleets",
+  "name": "@fleets/mobile-app",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -20,7 +20,8 @@
     "android": "ionic cap run android -l --external -p 5173",
     "cy:open": "start-server-and-test dev:local http://localhost:5173 'cypress open'",
     "cy:e2e": "start-server-and-test dev:local http://localhost:5173 'cypress run --browser chrome'",
-    "cy:components": "cypress run --browser chrome --component"
+    "cy:components": "cypress run --browser chrome --component",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@capacitor/android": "^6.0.0",
