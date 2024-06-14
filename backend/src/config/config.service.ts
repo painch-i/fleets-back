@@ -26,10 +26,7 @@ export class ConfigService {
       this.config = dotenv.parse(envBuffer);
       this.checkRequiredEnv(); // Appel à la vérification des variables requises
     } catch (error) {
-      if (error.code === 'ENOENT') {
-        throw new ConfigError('Missing .env file');
-      }
-      throw error;
+      console.log("No .env loaded")
     }
   }
   private checkRequiredEnv() {
