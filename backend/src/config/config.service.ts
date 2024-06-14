@@ -20,15 +20,21 @@ export class ConfigError extends Error {
 @RequiredEnv({ key: 'FLEETS_ENV', schema: z.nativeEnum(FleetsEnvironmentEnum) })
 export class ConfigService {
   private readonly config: Record<string, string>;
+
   constructor() {
+    this.config = process.env as Record<string, string>;
     try {
       const envBuffer = getFileBuffer('.env');
-      this.config = dotenv.parse(envBuffer);
-      this.checkRequiredEnv(); // Appel à la vérification des variables requises
+      this.config = {
+        ...this.config,
+        ...dotenv.parse(envBuffer),
+      };
     } catch (error) {
-      console.log("No .env loaded")
+      console.warn('No .env file found');
     }
+    this.checkRequiredEnv();
   }
+
   private checkRequiredEnv() {
     const shape = {};
     for (const { key, schema } of requiredEnv) {
