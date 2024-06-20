@@ -1,4 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
+import boxen, { Options } from 'boxen';
+import chalk from 'chalk';
 import { FeatureFlagsService } from '../../infrastructure/feature-flags/feature-flags.service';
 import { IFeatureFlagsService } from '../_shared/feature-flags-service.interface';
 
@@ -12,12 +14,30 @@ export class MailsManager {
     const sendOTPEmailEnabled =
       this.featureFlagsService.isEnabled('send-otp-emails');
     if (!sendOTPEmailEnabled) {
-      console.log(
-        `\x1b[32m%s\x1b[0m`,
-        `✅ OTP for \x1b[34m${email}\x1b[0m: \x1b[33m${otp}\x1b[0m`,
-      );
+      const formattedOtp = formatOtp(email, otp);
+      console.log(formattedOtp);
+    } else {
+      // Send email
+      console.warn('No email implementation yet');
     }
-    // Send email
-    console.warn('No email implementation yet');
   }
+}
+
+function formatOtp(email: string, otp: string) {
+  const otpMessage = `
+  ${chalk.blue.bold('🔐 OTP Information')}
+  ${chalk.blue('Email:')} ${chalk.white.bold(email)}
+  ${chalk.blue('OTP:')} ${chalk.green.bold(otp)}
+  `;
+
+  const boxenOptions: Options = {
+    padding: 1,
+    margin: 1,
+    borderStyle: 'round',
+    borderColor: 'blue',
+    backgroundColor: '#555555',
+  };
+
+  const formattedMessage = boxen(otpMessage, boxenOptions);
+  return formattedMessage;
 }
