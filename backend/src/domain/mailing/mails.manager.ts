@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import boxen, { Options } from 'boxen';
-import chalk from 'chalk';
+import type { Options } from 'boxen';
 import { FeatureFlagsService } from '../../infrastructure/feature-flags/feature-flags.service';
 import { IFeatureFlagsService } from '../_shared/feature-flags-service.interface';
 
@@ -14,7 +13,7 @@ export class MailsManager {
     const sendOTPEmailEnabled =
       this.featureFlagsService.isEnabled('send-otp-emails');
     if (!sendOTPEmailEnabled) {
-      const formattedOtp = formatOtp(email, otp);
+      const formattedOtp = await formatOtp(email, otp);
       console.log(formattedOtp);
     } else {
       // Send email
@@ -23,7 +22,9 @@ export class MailsManager {
   }
 }
 
-function formatOtp(email: string, otp: string) {
+async function formatOtp(email: string, otp: string) {
+  const boxen = await import('boxen');
+  const { default: chalk } = await import('chalk');
   const otpMessage = `
   ${chalk.blue.bold('🔐 OTP Information')}
   ${chalk.blue('Email:')} ${chalk.white.bold(email)}
@@ -38,6 +39,6 @@ function formatOtp(email: string, otp: string) {
     backgroundColor: '#555555',
   };
 
-  const formattedMessage = boxen(otpMessage, boxenOptions);
+  const formattedMessage = boxen.default(otpMessage, boxenOptions);
   return formattedMessage;
 }
