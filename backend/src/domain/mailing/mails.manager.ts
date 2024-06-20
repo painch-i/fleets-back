@@ -1,15 +1,23 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '../../config/config.service';
+import { Inject, Injectable } from '@nestjs/common';
+import { FeatureFlagsService } from '../../infrastructure/feature-flags/feature-flags.service';
+import { IFeatureFlagsService } from '../_shared/feature-flags-service.interface';
 
 @Injectable()
 export class MailsManager {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    @Inject(FeatureFlagsService)
+    private readonly featureFlagsService: IFeatureFlagsService,
+  ) {}
   async sendOTPEmail(email: string, otp: string) {
-    const environment = this.configService.get('FLEETS_ENV');
-    if (environment === 'production') {
-      // send email
-    } else {
-      console.log(`OTP for ${email}: ${otp}`);
+    const sendOTPEmailEnabled =
+      this.featureFlagsService.isEnabled('send-otp-emails');
+    if (!sendOTPEmailEnabled) {
+      console.log(
+        `\x1b[32m%s\x1b[0m`,
+        `✅ OTP for \x1b[34m${email}\x1b[0m: \x1b[33m${otp}\x1b[0m`,
+      );
     }
+    // Send email
+    console.warn('No email implementation yet');
   }
 }

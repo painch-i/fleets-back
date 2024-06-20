@@ -9,6 +9,7 @@ export const MIN_USER_AGE = 18;
 export const developmentFlags = {
   'bypass-otp-verification': true,
   'use-short-delays': false,
+  'send-otp-emails': false,
 } as const;
 
 export const UNLEASH_APP_NAMES: Record<FleetsEnvironmentEnum, UnleashAppName> =
