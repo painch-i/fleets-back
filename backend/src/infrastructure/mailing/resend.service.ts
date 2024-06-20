@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { render } from '@react-email/render';
-import sengrid from '@sendgrid/mail';
+import { Resend } from 'resend';
 import VerifyOtpEmail from 'transactional/dist/VerifyOTP.email';
 import { z } from 'zod';
 import { ConfigService } from '../../config/config.service';
@@ -11,15 +11,17 @@ import {
 } from '../../domain/_shared/mails-service.interface';
 
 @RequiredEnv({
-  key: 'SENDGRID_API_KEY',
+  key: 'RESEND_API_KEY',
   schema: z.string(),
 })
 @Injectable()
-export class SendgridService implements IMailsService {
+export class ResendService implements IMailsService {
+  private resend: Resend;
   constructor(private readonly configService: ConfigService) {
-    const apiKey = this.configService.get<string>('SENDGRID_API_KEY');
-    sengrid.setApiKey(apiKey);
+    const apiKey = this.configService.get<string>('RESEND_API_KEY');
+    this.resend = new Resend(apiKey);
   }
+
   async sendOTP(options: SendOTPMailOptions): Promise<void> {
     const html = render(
       VerifyOtpEmail({
@@ -27,12 +29,14 @@ export class SendgridService implements IMailsService {
         email: options.to,
       }),
     );
-    const sengridOptions = {
-      from: 'team@fleets-app.fr',
+
+    const resendOptions = {
+      from: "L'Équipe Fleets <team@fleets-app.fr>",
       to: options.to,
-      subject: `Code de vérification Fleets`,
+      subject: `🔐 Code de vérification`,
       html,
     };
-    await sengrid.send(sengridOptions);
+
+    await this.resend.emails.send(resendOptions);
   }
 }

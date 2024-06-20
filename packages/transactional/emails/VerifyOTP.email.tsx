@@ -1,4 +1,3 @@
-// OtpEmail.jsx
 import {
   Body, Container,
   Font, Head,
