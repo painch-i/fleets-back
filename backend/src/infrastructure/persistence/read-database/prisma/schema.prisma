@@ -27,6 +27,7 @@ model Fleet {
   status       FleetStatus
   createdAt    DateTime        @default(now())
   linesTaken   Json
+  network      UserNetwork?
 }
 
 model User {
@@ -160,6 +161,7 @@ enum FleetStatus {
   GATHERING
   TRAVELING
   ARRIVED
+  CANCELLED
 }
 
 enum VerificationStatus {

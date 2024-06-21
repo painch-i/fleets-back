@@ -21,6 +21,7 @@ import {
   IFleetsRepository,
   UpdateJoinRequestStatusOptions,
 } from '../../domain/fleets/interfaces/fleets-repository.interface';
+import { UserNetworkEnumToDatabase } from '../../domain/users/entities/user.types';
 import { Id } from '../../types';
 import { PrismaService } from '../persistence/read-database/prisma/prisma.service';
 
@@ -282,6 +283,7 @@ export class FleetsRepository implements IFleetsRepository {
           in: options.genderConstraints.map((constraint) => constraint),
         },
         status: FleetStatusToDatabase[options.status],
+        network: options.network ? UserNetworkEnumToDatabase[options.network] : undefined,
       };
     }
     const Fleets = await this.prisma.fleet.findMany(findOptions);
@@ -336,6 +338,9 @@ export class FleetsRepository implements IFleetsRepository {
           isJoinable: entity.isJoinable,
           status: FleetStatusToDatabase[entity.status],
           linesTaken: entity.linesTaken,
+          network: entity.network
+            ? UserNetworkEnumToDatabase[entity.network]
+            : undefined,
         },
       });
     } catch (error) {

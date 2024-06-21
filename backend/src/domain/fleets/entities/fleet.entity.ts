@@ -4,6 +4,10 @@ import { Id } from '../../../types';
 import { Station } from '../../navigation/station.entity';
 import { Member, User } from '../../users/entities/user.entity';
 import {
+  UserNetwork,
+  UserNetworkEnumFromDatabase,
+} from '../../users/entities/user.types';
+import {
   CreateFleetOptions,
   FleetStatus,
   FleetStatusFromDatabase,
@@ -29,6 +33,7 @@ export class Fleet extends IEntity {
   isJoinable: boolean;
   status: FleetStatus;
   linesTaken: LineTaken[];
+  network: UserNetwork | null;
 
   create(options: CreateFleetOptions): void {
     const {
@@ -84,8 +89,10 @@ export class Fleet extends IEntity {
       );
     }
     fleet.status = FleetStatusFromDatabase[fleetFromDb.status];
-    console.log(fleetFromDb.linesTaken);
     fleet.linesTaken = z.array(lineTakenSchema).parse(fleetFromDb.linesTaken);
+    fleet.network = fleetFromDb.network
+      ? UserNetworkEnumFromDatabase[fleetFromDb.network]
+      : null;
     return fleet;
   }
 

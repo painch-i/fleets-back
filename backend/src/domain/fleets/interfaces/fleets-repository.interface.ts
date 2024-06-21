@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { UserId } from '../../users/entities/user.types';
+import { UserId, UserNetwork } from '../../users/entities/user.types';
 import { Fleet, FleetId } from '../entities/fleet.entity';
 import { JoinRequest } from '../entities/join-request.entity';
 import {
@@ -18,6 +18,7 @@ export type FindAllOptions = {
   departureTime: Date;
   genderConstraints: GenderConstraintEnum[];
   status: FleetStatus;
+  network?: UserNetwork;
 };
 
 export type UpdateJoinRequestStatusOptions = {

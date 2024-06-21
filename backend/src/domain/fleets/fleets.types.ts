@@ -68,6 +68,7 @@ export enum FleetStatus {
   GATHERING = 'gathering',
   TRAVELING = 'traveling',
   ARRIVED = 'arrived',
+  CANCELLED = 'cancelled',
 }
 
 export const FleetStatusFromDatabase: Record<$Enums.FleetStatus, FleetStatus> =
@@ -76,6 +77,7 @@ export const FleetStatusFromDatabase: Record<$Enums.FleetStatus, FleetStatus> =
     [$Enums.FleetStatus.GATHERING]: FleetStatus.GATHERING,
     [$Enums.FleetStatus.TRAVELING]: FleetStatus.TRAVELING,
     [$Enums.FleetStatus.ARRIVED]: FleetStatus.ARRIVED,
+    [$Enums.FleetStatus.CANCELLED]: FleetStatus.CANCELLED,
   };
 
 export const FleetStatusToDatabase: Record<FleetStatus, $Enums.FleetStatus> = {
@@ -83,6 +85,7 @@ export const FleetStatusToDatabase: Record<FleetStatus, $Enums.FleetStatus> = {
   [FleetStatus.GATHERING]: $Enums.FleetStatus.GATHERING,
   [FleetStatus.TRAVELING]: $Enums.FleetStatus.TRAVELING,
   [FleetStatus.ARRIVED]: $Enums.FleetStatus.ARRIVED,
+  [FleetStatus.CANCELLED]: $Enums.FleetStatus.CANCELLED,
 };
 
 export const JoinRequestStatusFromDatabase: Record<

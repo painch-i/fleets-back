@@ -16,6 +16,7 @@ import { IEventGateway } from '../_shared/event-gateway.interface';
 import { IEventStore } from '../_shared/event-store.interface';
 import { IFeatureFlagsService } from '../_shared/feature-flags-service.interface';
 import { IRoutesService } from '../navigation/routes-service.interface';
+import { UserNetwork } from '../users/entities/user.types';
 import { IUsersRepository } from '../users/interfaces/users-repository.interface';
 import { GenderEnum } from '../users/value-objects/gender.value-object';
 import { Fleet } from './entities/fleet.entity';
@@ -108,6 +109,7 @@ export class FleetsManager {
     }
     const fleet = new Fleet();
     fleet.create(options);
+    fleet.network = administrator.network;
     let genderConstraint = GenderConstraintEnum.NO_CONSTRAINT;
     if (
       options.genderConstraintConfig ===
@@ -205,6 +207,10 @@ export class FleetsManager {
     }
 
     await this.kickAbsentMembers(fleet);
+    if (fleet.members && fleet.members.length === 1) {
+      await this.cancelFleet(fleetId);
+      throw new NotEnoughMembersInFleet();
+    }
 
     // Mettre à jour l'état du Fleet pour indiquer que le voyage a commencé
     fleet.startTrip();
@@ -235,6 +241,30 @@ export class FleetsManager {
     await this.taskScheduler.deleteScheduledTask({
       type: 'start-trip',
       fleetId,
+    });
+  }
+
+  private async cancelFleet(fleetId: Id) {
+    const fleet = await this.fleetsRepository.findById({
+      fleetId,
+    });
+    await this.fleetsRepository.update(fleetId, {
+      status: FleetStatusToDatabase[fleet.status],
+    });
+    await this.eventStore.store({
+      aggregateId: fleetId,
+      aggregateType: 'fleet',
+      createdAt: new Date(),
+      eventType: 'fleet-canceled',
+      payload: {
+        fleetId,
+      },
+    });
+    this.eventGateway.broadcastToFleet(fleetId, {
+      type: 'fleet-canceled',
+      payload: {
+        fleetId,
+      },
     });
   }
 
@@ -306,12 +336,17 @@ export class FleetsManager {
         break;
     }
     const departureTime = new Date(options.departureTime);
+    let network: UserNetwork | undefined;
+    if (searcher.network) {
+      network = searcher.network;
+    }
     return this.fleetsRepository.findAll({
       startStationId: options.startStationId,
       endStationId: options.endStationId,
       departureTime,
       genderConstraints,
       status: FleetStatus.FORMATION,
+      network,
     });
   }
 
