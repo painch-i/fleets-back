@@ -3,6 +3,7 @@
   "sourceMaps": true,
   "minify": false,
   "jsc": {
+    "target": "es2022",
     "baseUrl": "./",
     "paths": {
       "*": ["*", "src/*"]

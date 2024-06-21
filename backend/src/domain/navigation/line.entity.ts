@@ -9,7 +9,7 @@ import { TransportSubMode } from './transport-sub-mode.value-object';
 export type ExternalLineId = string;
 export type LineId = Id;
 export class Line extends IEntity {
-  id: LineId;
+  declare id: LineId;
   externalId: ExternalLineId;
   name: string;
   mode: TransportMode;

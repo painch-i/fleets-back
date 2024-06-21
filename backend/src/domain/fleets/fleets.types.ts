@@ -1,7 +1,9 @@
 import { $Enums, Prisma } from '@prisma/client';
 import { z } from 'zod';
-import { UserId } from '../users/entities/user.entity';
-import { UserMembershipWithOptionalRelations } from '../users/entities/user.types';
+import {
+  UserId,
+  UserMembershipWithOptionalRelations,
+} from '../users/entities/user.types';
 import { FleetId } from './entities/fleet.entity';
 import { getCreateFleetOptionsSchema } from './validation-schemas/create-fleet-options.schema';
 import { createJoinRequestOptionsSchema } from './validation-schemas/create-join-request-options.schema';

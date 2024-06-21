@@ -13,14 +13,14 @@ import {
   ServerEvent,
 } from 'src/domain/_shared/event-gateway.interface';
 import { z } from 'zod';
+import { AuthTokenPayload } from '../../domain/_shared/auth-service.interface';
 import { FleetId } from '../../domain/fleets/entities/fleet.entity';
-import { UserId } from '../../domain/users/entities/user.entity';
+import { UserId } from '../../domain/users/entities/user.types';
+import { UserOrPendingUser } from '../../domain/users/interfaces/users-repository.interface';
 import { AuthService } from '../../infrastructure/authentication/auth.service';
 import { UserAuthenticated } from '../../infrastructure/authentication/guards/user-authenticated.auth-guard';
 import { UsersRepository } from '../../infrastructure/repositories/users.repository';
 import { ZodValidationPipe } from '../http/zod-validation.pipe';
-import { AuthTokenPayload } from '../../domain/_shared/auth-service.interface';
-import { UserOrPendingUser } from '../../domain/users/interfaces/users-repository.interface';
 
 @UseGuards(UserAuthenticated)
 @WebSocketGateway({

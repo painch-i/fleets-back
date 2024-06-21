@@ -29,11 +29,12 @@ import {
 import { UserReference } from '../../domain/users/value-objects/user-reference.value-object';
 import { UserFromRequest } from '../../infrastructure/authentication/guards/decorators/user-reference.param-decorator';
 import { UserAuthenticated } from '../../infrastructure/authentication/guards/user-authenticated.auth-guard';
+import { EtnaApi } from '../../infrastructure/schools/etna.api';
+import { CompleteRegistrationHttpBody } from './http-bodies/users/complete-registration.http-body';
 import { StartLogInHttpBody } from './http-bodies/users/start-log-in.http-body';
-import { VerifyOTPHttpBody } from './http-bodies/users/verify-otp.http-body';
 import { StartRegistrationHttpBody } from './http-bodies/users/start-registration.http-body';
 import { TokenResponseHttpBody } from './http-bodies/users/token-response.http-body';
-import { CompleteRegistrationHttpBody } from './http-bodies/users/complete-registration.http-body';
+import { VerifyOTPHttpBody } from './http-bodies/users/verify-otp.http-body';
 
 export const createUserDtoSchema = z.object({
   email: Email.getSchema(),
@@ -60,7 +61,10 @@ export class CreateUserDto
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersManager: UsersManager) {}
+  constructor(
+    private readonly usersManager: UsersManager,
+    private readonly etnaApi: EtnaApi,
+  ) {}
 
   @Get('me')
   @ApiTags('users')

@@ -42,6 +42,7 @@ model User {
   joinRequests JoinRequest[]
   isOnboarded Boolean
   createdAt   DateTime @default(now())
+  network     UserNetwork?
 }
 
 model OneTimePassword {
@@ -166,4 +167,8 @@ enum VerificationStatus {
   PENDING
   VERIFIED
   INVALID
+}
+
+enum UserNetwork {
+  ETNA
 }

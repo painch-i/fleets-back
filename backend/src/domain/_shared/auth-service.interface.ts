@@ -1,4 +1,5 @@
-import { UserId } from '../users/entities/user.entity';
+import { UserId } from '../users/entities/user.types';
+
 export type ResourceType = {
   fleets: string;
   users: string;

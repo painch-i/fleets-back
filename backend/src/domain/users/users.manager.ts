@@ -3,6 +3,7 @@ import { AuthService } from '../../infrastructure/authentication/auth.service';
 import { EventStore } from '../../infrastructure/events/event-store.service';
 import { FeatureFlagsService } from '../../infrastructure/feature-flags/feature-flags.service';
 import { UsersRepository } from '../../infrastructure/repositories/users.repository';
+import { EtnaApi } from '../../infrastructure/schools/etna.api';
 import { Id } from '../../types';
 import { IAuthService } from '../_shared/auth-service.interface';
 import { Issue, ValidationError } from '../_shared/errors/validation.error';
@@ -13,9 +14,12 @@ import { PendingUser } from './entities/pending-user.entity';
 import { User } from './entities/user.entity';
 import {
   CompleteRegistrationOptions,
+  CreatePendingUserOptions,
   FindUserByEmailOptions,
+  UserNetwork,
   VerifyOTPOptions,
 } from './entities/user.types';
+import { IEtnaApi } from './interfaces/etna-api.interface';
 import { IUsersRepository } from './interfaces/users-repository.interface';
 import { completeRegistrationOptionsSchema } from './validation/complete-registration-options.schema';
 import { findByEmailOptionsSchema } from './validation/find-by-email-options.schema';
@@ -32,6 +36,9 @@ export class UsersManager {
     private readonly mailsManager: MailsManager,
     @Inject(FeatureFlagsService)
     private readonly featureFlagsService: IFeatureFlagsService,
+
+    @Inject(EtnaApi)
+    private readonly etnaApi: IEtnaApi,
   ) {}
 
   async startLogIn(options: FindUserByEmailOptions) {
@@ -108,7 +115,24 @@ export class UsersManager {
     const existsResponse = await this.usersRepository.existsByEmail(email);
     let userId: Id;
     if (!existsResponse.exists) {
-      const createdUser = await this.createPendingUser({ email });
+      const createOptions: CreatePendingUserOptions = {
+        email,
+      };
+
+      const isEtnaEmail = email.endsWith('@etna-alternance.net');
+      if (isEtnaEmail) {
+        const login = email.split('@')[0];
+        try {
+          const userEtnaInfos = await this.etnaApi.getUserInfo(login);
+          createOptions.firstName = userEtnaInfos.firstName;
+          createOptions.lastName = userEtnaInfos.lastName;
+          createOptions.network = UserNetwork.ETNA;
+        } catch (error) {
+          console.warn('Failed to get user infos from ETNA', error);
+        }
+      }
+
+      const createdUser = await this.createPendingUser(createOptions);
       userId = createdUser.id;
     } else {
       userId = existsResponse.id;
@@ -132,7 +156,7 @@ export class UsersManager {
     return token;
   }
 
-  private async createPendingUser(options: FindUserByEmailOptions) {
+  private async createPendingUser(options: CreatePendingUserOptions) {
     const user = new PendingUser();
     user.create(options);
     const createdUser = await this.usersRepository.createPendingUser(user);

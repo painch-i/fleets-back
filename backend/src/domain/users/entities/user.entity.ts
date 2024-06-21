@@ -1,25 +1,29 @@
-import { Id } from '../../../types';
 import { assertIsNotNull } from '../../../utils';
-import IEntity from '../../_shared/entity.interface';
 import { Fleet, FleetId } from '../../fleets/entities/fleet.entity';
 import { GenderEnum } from '../value-objects/gender.value-object';
+import { BaseUser } from './base-user.entity';
 import {
   CompleteRegistrationOptions,
   CreateUserOptions,
   GenderEnumFromDatabase,
+  UserId,
   UserMembershipWithOptionalRelations,
+  UserNetwork,
+  UserNetworkEnumFromDatabase,
   UserWithOptionalRelations,
 } from './user.types';
 
-export class User extends IEntity {
-  email: string;
-  firstName: string;
-  lastName: string;
-  birthDate: Date;
-  gender: GenderEnum;
+export class User extends BaseUser {
+  declare id: UserId;
+  declare email: string;
+  declare firstName: string;
+  declare lastName: string;
+  declare birthDate: Date;
+  declare gender: GenderEnum;
   fleetId: FleetId | null = null;
   fleet?: Fleet;
-  isOnboarded: true;
+  declare isOnboarded: true;
+  declare network: UserNetwork | null;
 
   static fromDatabase(userFromDb: UserWithOptionalRelations) {
     const id = userFromDb.id;
@@ -42,6 +46,9 @@ export class User extends IEntity {
         user.fleet = Fleet.fromDatabase(membership.fleet);
       }
     }
+    user.network = userFromDb.network
+      ? UserNetworkEnumFromDatabase[userFromDb.network]
+      : null;
     return user;
   }
 
@@ -63,8 +70,8 @@ export class User extends IEntity {
 
 export class Member extends User {
   hasConfirmedHisPresence: boolean;
-  fleetId: FleetId;
-  fleet?: Fleet;
+  declare fleetId: FleetId;
+  declare fleet?: Fleet;
 
   static fromMembership(membership: UserMembershipWithOptionalRelations) {
     const id = membership.userId;
@@ -83,5 +90,3 @@ export class Member extends User {
     return member;
   }
 }
-
-export type UserId = Id;

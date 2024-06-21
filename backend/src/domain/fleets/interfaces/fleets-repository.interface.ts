@@ -1,12 +1,12 @@
 import { Prisma } from '@prisma/client';
-import { UserId } from '../../users/entities/user.entity';
+import { UserId } from '../../users/entities/user.types';
 import { Fleet, FleetId } from '../entities/fleet.entity';
 import { JoinRequest } from '../entities/join-request.entity';
 import {
   FindByAdminOptions,
   FindByIdOptions,
-  FindJoinRequestOptions,
   FindByMemberAndAdminOptions,
+  FindJoinRequestOptions,
   FleetStatus,
   GenderConstraintEnum,
   JoinRequestStatus,

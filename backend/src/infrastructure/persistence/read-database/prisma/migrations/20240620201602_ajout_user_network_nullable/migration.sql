@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "User" ALTER COLUMN "network" DROP NOT NULL,
+ALTER COLUMN "network" DROP DEFAULT;

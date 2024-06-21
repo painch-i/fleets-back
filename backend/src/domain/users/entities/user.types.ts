@@ -1,9 +1,13 @@
 import { $Enums, Prisma } from '@prisma/client';
 import { z } from 'zod';
-import { findByEmailOptionsSchema } from '../validation/find-by-email-options.schema';
-import { GenderEnum } from '../value-objects/gender.value-object';
+import { Id } from '../../../types';
 import { completeRegistrationOptionsSchema } from '../validation/complete-registration-options.schema';
+import { createPendingUserOptionsSchema } from '../validation/create-pending-user-options.schema';
+import { findByEmailOptionsSchema } from '../validation/find-by-email-options.schema';
 import { verifyOTPOptionsSchema } from '../validation/verify-otp-options.schema';
+import { GenderEnum } from '../value-objects/gender.value-object';
+
+export type UserId = Id;
 
 type UserRelationWithCount = keyof Prisma.UserInclude;
 type UserRelation = Exclude<UserRelationWithCount, '_count'>;
@@ -44,6 +48,23 @@ export enum VerificationStatus {
   INVALID = 'INVALID',
 }
 
+export enum UserNetwork {
+  ETNA = 'ETNA',
+}
+
+export const UserNetworkEnumFromDatabase: Record<
+  $Enums.UserNetwork,
+  UserNetwork
+> = {
+  [$Enums.UserNetwork.ETNA]: UserNetwork.ETNA,
+};
+
+export const UserNetworkEnumToDatabase: Record<
+  UserNetwork,
+  $Enums.UserNetwork
+> = {
+  [UserNetwork.ETNA]: $Enums.UserNetwork.ETNA,
+};
 export const GenderEnumFromDatabase: Record<$Enums.Gender, GenderEnum> = {
   [$Enums.Gender.MALE]: GenderEnum.MALE,
   [$Enums.Gender.FEMALE]: GenderEnum.FEMALE,
@@ -55,6 +76,10 @@ export const GenderEnumToDatabase: Record<GenderEnum, $Enums.Gender> = {
 };
 
 export type FindUserByEmailOptions = z.infer<typeof findByEmailOptionsSchema>;
+
+export type CreatePendingUserOptions = z.infer<
+  typeof createPendingUserOptionsSchema
+>;
 
 export type CreateUserOptions = {
   email: string;

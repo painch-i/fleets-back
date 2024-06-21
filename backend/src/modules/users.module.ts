@@ -8,6 +8,7 @@ import { ResendService } from '../infrastructure/mailing/resend.service';
 import { SendgridService } from '../infrastructure/mailing/sendgrid.service';
 import { PrismaService } from '../infrastructure/persistence/read-database/prisma/prisma.service';
 import { UsersRepository } from '../infrastructure/repositories/users.repository';
+import { EtnaApi } from '../infrastructure/schools/etna.api';
 import { VerificationService } from '../infrastructure/verification/verification.service';
 import { UsersController } from '../presenter/http/users.controller';
 import { AuthModule } from './auth.module';
@@ -23,6 +24,7 @@ import { AuthModule } from './auth.module';
     MailsManager,
     SendgridService,
     ResendService,
+    EtnaApi,
   ],
 })
 export class UsersModule {}

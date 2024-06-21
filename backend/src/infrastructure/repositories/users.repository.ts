@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { $Enums, Prisma } from '@prisma/client';
 import { RepositoryErrors } from '../../domain/_shared/repository.interface';
+import { PendingUser } from '../../domain/users/entities/pending-user.entity';
 import { User } from '../../domain/users/entities/user.entity';
+import { GenderEnumToDatabase } from '../../domain/users/entities/user.types';
 import {
   ExistsReturn,
   GetUserByIdOptions,
@@ -11,8 +13,6 @@ import {
   UserOrPendingUser,
 } from '../../domain/users/interfaces/users-repository.interface';
 import { PrismaService } from '../persistence/read-database/prisma/prisma.service';
-import { PendingUser } from '../../domain/users/entities/pending-user.entity';
-import { GenderEnumToDatabase } from '../../domain/users/entities/user.types';
 @Injectable()
 export class UsersRepository implements IUsersRepository {
   constructor(private prisma: PrismaService) {}
@@ -69,6 +69,9 @@ export class UsersRepository implements IUsersRepository {
       id: user.id,
       email: user.email,
       isOnboarded: false,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      network: user.network,
     };
     const createdUser = await this.prisma.user.create({
       data,
