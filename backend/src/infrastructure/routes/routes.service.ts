@@ -120,6 +120,11 @@ export class RoutesService implements IRoutesService {
         linesTaken: linesTakenForRoute,
       });
     }
+    const emptyRouteHash = this.computeHash([]);
+    routeSuggestions.push({
+      hash: emptyRouteHash,
+      linesTaken: [],
+    });
     return routeSuggestions;
   }
 
