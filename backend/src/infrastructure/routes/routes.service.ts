@@ -13,7 +13,7 @@ import {
 } from '../../domain/navigation/routes-service.interface';
 
 const auth = new GoogleAuth({
-  keyFile: 'fleets-7f5ae-0cebc001c976.json',
+  keyFile: 'fleets-7f5ae-77a48098ca0a.json',
 });
 
 @Injectable()
