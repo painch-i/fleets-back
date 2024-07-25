@@ -94,7 +94,8 @@ export class RoutesService implements IRoutesService {
             if (step.transitDetails.transitLine.vehicle.name) {
               name = {
                 text: {
-                  text: step.transitDetails.transitLine.vehicle.name as string,
+                  text: step.transitDetails.transitLine.vehicle.name
+                    .text as string,
                 },
               };
             }
