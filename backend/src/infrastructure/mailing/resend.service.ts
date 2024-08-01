@@ -23,12 +23,7 @@ export class ResendService implements IMailsService {
   }
 
   async sendOTP(options: SendOTPMailOptions): Promise<void> {
-    const html = render(
-      VerifyOtpEmail({
-        otp: options.otp,
-        email: options.to,
-      }),
-    );
+    const html = render(VerifyOtpEmail(options.otp));
 
     const resendOptions = {
       from: "L'Équipe Fleets <team@fleets-app.fr>",

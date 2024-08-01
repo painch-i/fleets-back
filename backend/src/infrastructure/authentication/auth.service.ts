@@ -17,6 +17,7 @@ import { RequiredEnv } from '../../config/required-env.decorator';
 import {
   AuthTokenPayload,
   IAuthService,
+  OTPPayload,
 } from '../../domain/_shared/auth-service.interface';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 import { UsersRepository } from '../repositories/users.repository';
@@ -34,7 +35,7 @@ export class AuthService implements IAuthService {
     private readonly featureFlagsService: FeatureFlagsService,
   ) {}
 
-  async createOTP(email: string): Promise<string> {
+  async createOTP(email: string): Promise<OTPPayload> {
     const otp = Array.from({ length: OTP_CODE_LENGTH }, () =>
       Math.floor(
         (getRandomValues(new Uint32Array(1))[0] / (0x100000000 - 1)) * 10,
@@ -42,7 +43,11 @@ export class AuthService implements IAuthService {
     ).join('');
     const expiry = Date.now() + OTP_EXPIRATION_MINUTES * 60 * 1000;
     await this.usersRepository.setOTP(email, otp, new Date(expiry));
-    return otp;
+    return {
+      code: otp,
+      email,
+      expiry: expiry,
+    };
   }
 
   async verifyOTP(email: string, otp: string): Promise<boolean> {

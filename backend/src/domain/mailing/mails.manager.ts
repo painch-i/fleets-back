@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FeatureFlagsService } from '../../infrastructure/feature-flags/feature-flags.service';
 import { ResendService } from '../../infrastructure/mailing/resend.service';
+import { OTPPayload } from '../_shared/auth-service.interface';
 import { IFeatureFlagsService } from '../_shared/feature-flags-service.interface';
 import { IMailsService } from '../_shared/mails-service.interface';
 
@@ -12,7 +13,7 @@ export class MailsManager {
     @Inject(ResendService)
     private readonly mailsService: IMailsService,
   ) {}
-  async sendOTPEmail(email: string, otp: string) {
+  async sendOTPEmail(email: string, otp: OTPPayload) {
     const sendOTPEmailEnabled =
       this.featureFlagsService.isEnabled('send-otp-emails');
 

@@ -21,12 +21,7 @@ export class SendgridService implements IMailsService {
     sengrid.setApiKey(apiKey);
   }
   async sendOTP(options: SendOTPMailOptions): Promise<void> {
-    const html = render(
-      VerifyOtpEmail({
-        otp: options.otp,
-        email: options.to,
-      }),
-    );
+    const html = render(VerifyOtpEmail(options.otp));
     const sengridOptions = {
       from: 'team@fleets-app.fr',
       to: options.to,

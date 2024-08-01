@@ -1,11 +1,13 @@
 declare const VerifyOTPEmail: {
-    ({ otp, email }: {
-        otp: any;
-        email: any;
+    ({ code, email, expiry }: {
+        code: string;
+        email: string;
+        expiry: number;
     }): JSX.Element;
     PreviewProps: {
-        otp: string;
+        code: string;
         email: string;
+        expiresAt: number;
     };
 };
 export default VerifyOTPEmail;

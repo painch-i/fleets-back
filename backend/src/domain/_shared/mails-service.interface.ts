@@ -1,6 +1,8 @@
+import { OTPPayload } from './auth-service.interface';
+
 export type SendOTPMailOptions = {
   to: string;
-  otp: string;
+  otp: OTPPayload;
 };
 
 export interface IMailsService {

@@ -17,10 +17,16 @@ export type CreateAuthTokenOptions = {
   email: string;
 };
 
+export type OTPPayload = {
+  email: string;
+  code: string;
+  expiry: number;
+};
+
 export interface IAuthService {
   verifyToken(token: string): Promise<AuthTokenPayload>;
   verifyOTP(email: string, otp: string): Promise<boolean>;
-  createOTP(email: string): Promise<string>;
+  createOTP(email: string): Promise<OTPPayload>;
   createToken(options: CreateAuthTokenOptions): Promise<string>;
   // isUserFleetMember(userId: string, fleetId: FleetId): Promise<boolean>;
   // isUserFleetOwner(userId: string, fleetId: FleetId): Promise<boolean>;

@@ -5,11 +5,16 @@ import {
 } from '@react-email/components';
 import React from 'react';
 
-const VerifyOTPEmail = ({ otp, email }) => {
+const VerifyOTPEmail = ({ code, email, expiry }: {
+  code: string;
+  email: string;
+  expiry: number;
+}) => {
+  const minutesLeft = Math.ceil((expiry - Date.now()) / 60000);
   const logoSrc = 'https://web.fleets-app.com/assets/logos/logo.png'; // Remplacez par votre logo encodé en base64
   const headerText = "Vérifiez votre adresse email";
   const bodyText = 'Utilisez ce code pour vérifier votre adresse email sur Fleets.';
-  const infoText = `Ce code a été envoyé à ${email}.`;
+  const infoText = `Ce code a été envoyé à ${email}, il expirera dans ${minutesLeft} minutes.`;
   const footerText = "Si vous n'avez pas demandé cet email, vous pouvez l'ignorer en toute sécurité.";
 
   return (
@@ -33,7 +38,7 @@ const VerifyOTPEmail = ({ otp, email }) => {
             <Heading className="text-2xl font-bold mb-2">{headerText}</Heading>
             <Text className="mb-4 text-gray-700">{bodyText}</Text>
             <div className="text-2xl font-mono tracking-widest my-4">
-              {otp.split('').map((digit, index) => (
+              {code.split('').map((digit, index) => (
                 <span key={index} className="inline-block mx-1">{digit}</span>
               ))}
             </div>
@@ -48,7 +53,10 @@ const VerifyOTPEmail = ({ otp, email }) => {
 
 export default VerifyOTPEmail;
 
+const expiresAt = Date.now() + 10 * 60 * 1000;
+
 VerifyOTPEmail.PreviewProps = {
-  otp: '123456',
+  code: '123456',
   email: 'painch_i@etna-alternance.net',
+  expiresAt,
 };

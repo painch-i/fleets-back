@@ -50,12 +50,7 @@ export class NodemailerService implements IMailsService {
   }
 
   async sendOTP(options: SendOTPMailOptions): Promise<void> {
-    const html = render(
-      VerifyOtpEmail({
-        otp: options.otp,
-        email: options.to,
-      }),
-    );
+    const html = render(VerifyOtpEmail(options.otp));
 
     const mailOptions = {
       from: 'team@fleets-app.fr',
