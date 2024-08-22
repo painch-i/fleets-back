@@ -1,5 +1,6 @@
 import { RoutesClient } from '@googlemaps/routing';
 import { Injectable } from '@nestjs/common';
+import { existsSync } from 'fs';
 import { GoogleAuth } from 'google-auth-library';
 import { createHmac } from 'node:crypto';
 import { z } from 'zod';
@@ -12,8 +13,21 @@ import {
   RouteSuggestion,
 } from '../../domain/navigation/routes-service.interface';
 
+const KEY_FILENAME = 'fleets-7f5ae-77a48098ca0a.json';
+
+const keyFilePaths = [KEY_FILENAME, `/etc/secrets/${KEY_FILENAME}`];
+
+// Trouver le premier chemin existant
+const keyFile = keyFilePaths.find((path) => existsSync(path));
+
+if (!keyFile) {
+  throw new Error(
+    `Aucun des fichiers JSON de clé n'a été trouvé dans les chemins: ${keyFilePaths.join(', ')}`,
+  );
+}
+
 const auth = new GoogleAuth({
-  keyFile: 'fleets-7f5ae-77a48098ca0a.json',
+  keyFile: KEY_FILENAME,
 });
 
 @Injectable()
