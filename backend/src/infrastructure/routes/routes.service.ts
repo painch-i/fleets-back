@@ -1,7 +1,6 @@
 import { RoutesClient } from '@googlemaps/routing';
 import { Injectable } from '@nestjs/common';
-import { existsSync } from 'fs';
-import { GoogleAuth } from 'google-auth-library';
+import { auth } from 'google-auth-library';
 import { createHmac } from 'node:crypto';
 import { z } from 'zod';
 import { ConfigService } from '../../config/config.service';
@@ -13,35 +12,29 @@ import {
   RouteSuggestion,
 } from '../../domain/navigation/routes-service.interface';
 
-const KEY_FILENAME = 'fleets-7f5ae-77a48098ca0a.json';
-
-const keyFilePaths = [KEY_FILENAME, `/etc/secrets/${KEY_FILENAME}`];
-
-// Trouver le premier chemin existant
-const keyFile = keyFilePaths.find((path) => existsSync(path));
-
-if (!keyFile) {
-  throw new Error(
-    `Aucun des fichiers JSON de clé n'a été trouvé dans les chemins: ${keyFilePaths.join(', ')}`,
-  );
-}
-
-const auth = new GoogleAuth({
-  keyFile: KEY_FILENAME,
-});
-
 @Injectable()
-@RequiredEnv({
-  key: 'NAVIGATION_SECRET_KEY',
-  schema: z.string(),
-})
+@RequiredEnv(
+  {
+    key: 'NAVIGATION_SECRET_KEY',
+    schema: z.string(),
+  },
+  {
+    key: 'GOOGLE_SERVICE_ACCOUNT_CREDS',
+    schema: z.string(),
+  },
+)
 export class RoutesService implements IRoutesService {
-  private routesClient = new RoutesClient({
-    auth,
-  });
+  private routesClient: RoutesClient;
   private secretKey: string;
   constructor(private readonly configService: ConfigService) {
     this.secretKey = this.configService.get('NAVIGATION_SECRET_KEY');
+    const keysJson = this.configService.get<string>(
+      'GOOGLE_SERVICE_ACCOUNT_CREDS',
+    );
+    const keys = JSON.parse(keysJson);
+    this.routesClient = new RoutesClient({
+      authClient: auth.fromJSON(keys),
+    });
   }
   compare: any;
   async getRouteSuggestionsBetweenLocations(
