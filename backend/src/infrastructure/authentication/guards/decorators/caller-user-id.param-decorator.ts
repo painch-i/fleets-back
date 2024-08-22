@@ -33,6 +33,7 @@ export const CallerUserId = createParamDecorator(
     if (!userId && data.required) {
       throw new UnauthorizedException('Unauthorized');
     }
+    return userId;
   },
 );
 
