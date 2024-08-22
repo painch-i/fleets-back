@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { GenderEnum } from '../../../../domain/users/value-objects/gender.value-object';
+import { GenderEnum } from '../../../../domain/users/entities/user.types';
 
 export class CompleteRegistrationHttpBody {
   @ApiProperty({ type: 'string', example: 'Jane' })

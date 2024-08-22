@@ -16,9 +16,8 @@ import { IEventGateway } from '../_shared/event-gateway.interface';
 import { IEventStore } from '../_shared/event-store.interface';
 import { IFeatureFlagsService } from '../_shared/feature-flags-service.interface';
 import { IRoutesService } from '../navigation/routes-service.interface';
-import { UserNetwork } from '../users/entities/user.types';
+import { GenderEnum, UserNetwork } from '../users/entities/user.types';
 import { IUsersRepository } from '../users/interfaces/users-repository.interface';
-import { GenderEnum } from '../users/value-objects/gender.value-object';
 import { Fleet } from './entities/fleet.entity';
 import { JoinRequest } from './entities/join-request.entity';
 import {

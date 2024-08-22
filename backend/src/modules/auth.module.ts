@@ -8,7 +8,6 @@ import { AuthService } from '../infrastructure/authentication/auth.service';
 import { FeatureFlagsModule } from '../infrastructure/feature-flags/feature-flags.module';
 import { PrismaService } from '../infrastructure/persistence/read-database/prisma/prisma.service';
 import { UsersRepository } from '../infrastructure/repositories/users.repository';
-import { AuthController } from '../presenter/http/auth.controllers';
 
 @RequiredEnv({
   key: 'JWT_SECRET',
@@ -30,7 +29,7 @@ import { AuthController } from '../presenter/http/auth.controllers';
     }),
     FeatureFlagsModule,
   ],
-  controllers: [AuthController],
+  controllers: [],
   providers: [AuthService, UsersRepository, PrismaService, JwtService],
   exports: [AuthService, JwtService],
 })

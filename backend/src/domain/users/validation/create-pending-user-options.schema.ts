@@ -1,10 +1,9 @@
 import { z } from 'zod';
+import { emailSchema } from '../../_shared/validation/email.schema';
 import { UserNetwork } from '../entities/user.types';
 
 export const createPendingUserOptionsSchema = z.object({
-  email: z
-    .string()
-    .email()
+  email: emailSchema
     // Lowercase
     .transform((value) => value.toLowerCase())
     // Trim

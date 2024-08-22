@@ -1,7 +1,6 @@
 import { UserNetwork } from '@prisma/client';
 import IEntity from '../../_shared/entity.interface';
-import { GenderEnum } from '../value-objects/gender.value-object';
-import { UserId } from './user.types';
+import { GenderEnum, UserId } from './user.types';
 
 export class BaseUser extends IEntity {
   declare id: UserId;

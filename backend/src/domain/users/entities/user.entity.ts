@@ -1,10 +1,10 @@
 import { assertIsNotNull } from '../../../utils';
 import { Fleet, FleetId } from '../../fleets/entities/fleet.entity';
-import { GenderEnum } from '../value-objects/gender.value-object';
 import { BaseUser } from './base-user.entity';
 import {
   CompleteRegistrationOptions,
   CreateUserOptions,
+  GenderEnum,
   GenderEnumFromDatabase,
   UserId,
   UserMembershipWithOptionalRelations,

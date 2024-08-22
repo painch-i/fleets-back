@@ -1,5 +1,6 @@
 import { z } from 'zod';
+import { emailSchema } from '../../_shared/validation/email.schema';
 
-export const findByEmailOptionsSchema = z.object({
-  email: z.string().email(),
+export const findUserByEmailOptionsSchema = z.object({
+  email: emailSchema,
 });

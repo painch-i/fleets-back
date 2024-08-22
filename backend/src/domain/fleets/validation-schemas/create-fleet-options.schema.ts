@@ -12,12 +12,11 @@ export type GetCreateFleetOptionsSchemaOptions = {
   maxGatheringDelay: number;
 };
 
-export function getCreateFleetOptionsSchema(
+export function getCreateFleetPayloadSchema(
   options: GetCreateFleetOptionsSchemaOptions,
 ) {
   return z.object({
     name: variableStringSchema,
-    administratorId: entityIdSchema,
     startStationId: entityIdSchema,
     endStationId: entityIdSchema,
     departureTime: getDepartureTimeSchema(options.minDepartureDelay),
@@ -31,4 +30,14 @@ export function getCreateFleetOptionsSchema(
     }),
     genderConstraintConfig: genderConstraintConfigSchema,
   });
+}
+
+export function getCreateFleetOptionsSchema(
+  options: GetCreateFleetOptionsSchemaOptions,
+) {
+  return getCreateFleetPayloadSchema(options).and(
+    z.object({
+      administratorId: entityIdSchema,
+    }),
+  );
 }

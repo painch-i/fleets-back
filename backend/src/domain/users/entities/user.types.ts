@@ -3,11 +3,15 @@ import { z } from 'zod';
 import { Id } from '../../../types';
 import { completeRegistrationOptionsSchema } from '../validation/complete-registration-options.schema';
 import { createPendingUserOptionsSchema } from '../validation/create-pending-user-options.schema';
-import { findByEmailOptionsSchema } from '../validation/find-by-email-options.schema';
+import { findUserByEmailOptionsSchema } from '../validation/find-by-email-options.schema';
 import { verifyOTPOptionsSchema } from '../validation/verify-otp-options.schema';
-import { GenderEnum } from '../value-objects/gender.value-object';
 
 export type UserId = Id;
+
+export enum GenderEnum {
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
+}
 
 type UserRelationWithCount = keyof Prisma.UserInclude;
 type UserRelation = Exclude<UserRelationWithCount, '_count'>;
@@ -75,7 +79,7 @@ export const GenderEnumToDatabase: Record<GenderEnum, $Enums.Gender> = {
   [GenderEnum.FEMALE]: $Enums.Gender.FEMALE,
 };
 
-export type FindUserByEmailOptions = z.infer<typeof findByEmailOptionsSchema>;
+export type FindUserByEmailOptions = z.infer<typeof findUserByEmailOptionsSchema>;
 
 export type CreatePendingUserOptions = z.infer<
   typeof createPendingUserOptionsSchema

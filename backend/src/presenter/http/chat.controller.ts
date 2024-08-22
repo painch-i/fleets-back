@@ -15,12 +15,12 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { RepositoryErrors } from '../../domain/_shared/repository.interface';
-import { UserReference } from '../../domain/users/value-objects/user-reference.value-object';
-import { UserFromRequest } from '../../infrastructure/authentication/guards/decorators/user-reference.param-decorator';
+import { ChatManager } from '../../domain/chat/chat.manager';
+import { UserId } from '../../domain/users/entities/user.types';
+import { CallerUserId } from '../../infrastructure/authentication/guards/decorators/caller-user-id.param-decorator';
 import { UserAuthenticated } from '../../infrastructure/authentication/guards/user-authenticated.auth-guard';
 import { SendMessageHttpBody } from './http-bodies/chat/send-message.http-body';
 import { ZodValidationPipe } from './zod-validation.pipe';
-import { ChatManager } from '../../domain/chat/chat.manager';
 
 @Controller('fleets/:fleetId')
 @ApiBearerAuth()
@@ -61,16 +61,18 @@ export class ChatController {
   })
   async sendFleetMessage(
     @Param('fleetId') fleetId: string | null,
-    @UserFromRequest() userReference: UserReference | null,
+    @CallerUserId({
+      required: true,
+    })
+    userId: UserId,
     @Body(new ZodValidationPipe(SendMessageHttpBody.getSchema()))
     body: SendMessageHttpBody,
   ) {
     if (!fleetId) throw new BadRequestException('Missing fleetId');
-    if (!userReference) throw new BadRequestException('Missing user');
     try {
       return await this.chatManager.sendMessage({
         fleetId,
-        authorId: userReference.getId(),
+        authorId: userId,
         content: body.content,
       });
     } catch (error) {

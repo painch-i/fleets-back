@@ -3,7 +3,6 @@ import {
   Body,
   Controller,
   Get,
-  HttpException,
   NotFoundException,
   Param,
   Post,
@@ -13,6 +12,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiNoContentResponse,
@@ -30,11 +30,12 @@ import {
   UserNotMeetingConstraintsError,
 } from '../../domain/fleets/errors/errors';
 import { FleetsManager } from '../../domain/fleets/fleets.manager';
-import { UserReference } from '../../domain/users/value-objects/user-reference.value-object';
-import { UserFromRequest } from '../../infrastructure/authentication/guards/decorators/user-reference.param-decorator';
+import { getCreateFleetPayloadSchema } from '../../domain/fleets/validation-schemas/create-fleet-options.schema';
+import { UserId } from '../../domain/users/entities/user.types';
+import { CallerUserId } from '../../infrastructure/authentication/guards/decorators/caller-user-id.param-decorator';
 import { UserAuthenticated } from '../../infrastructure/authentication/guards/user-authenticated.auth-guard';
 import { StationOrLineNotFoundError } from '../../infrastructure/repositories/fleets.repository';
-import { CreateFleetHttpBody } from './http-bodies/fleets/create-fleet.http-body';
+import { generateOpenApiSchema } from '../../utils';
 import { RemoveMemberHttpBody } from './http-bodies/fleets/remove-member.http-body';
 import { RespondToRequestHttpBody } from './http-bodies/fleets/respond-to-request.http-body';
 import { SearchFleetsQueryParams } from './http-bodies/fleets/search-fleets.query-params';
@@ -49,17 +50,28 @@ export class FleetsController {
   @UseGuards(UserAuthenticated)
   @ApiBearerAuth()
   @Post('create-fleet')
+  @ApiBody({
+    schema: generateOpenApiSchema(
+      getCreateFleetPayloadSchema({
+        minDepartureDelay: 5,
+        minGatheringDelay: 5,
+        maxGatheringDelay: 5,
+      }),
+    ),
+  })
   async createFleet(
     @Body()
-    body: CreateFleetHttpBody,
-    @UserFromRequest() userReference: UserReference | null,
+    body: any,
+    @CallerUserId({
+      required: true,
+    })
+    userId: UserId,
   ): Promise<Fleet> {
-    if (!userReference) throw new HttpException('Unauthorized', 401);
     try {
       return await this.fleetsManager.createFleet({
         ...body,
         departureTime: new Date(body.departureTime),
-        administratorId: userReference.getId(),
+        administratorId: userId,
       });
     } catch (error) {
       if (error instanceof StationOrLineNotFoundError) {
@@ -81,14 +93,15 @@ export class FleetsController {
   async searchFleets(
     @Query()
     query: SearchFleetsQueryParams,
-    @UserFromRequest() userReference: UserReference | null,
+    @CallerUserId({
+      required: true,
+    })
+    userId: UserId,
   ): Promise<Fleet[]> {
-    if (!userReference) throw new HttpException('Unauthorized', 401);
-
     return await this.fleetsManager.searchFleets({
       ...query,
       departureTime: new Date(query.departureTime),
-      searcherId: userReference.getId(),
+      searcherId: userId,
     });
   }
 
@@ -98,15 +111,13 @@ export class FleetsController {
   })
   @ApiBearerAuth()
   @UseGuards(UserAuthenticated)
-  async getCurrentFleet(
-    @UserFromRequest() userReference: UserReference | null,
-  ) {
-    if (!userReference) {
+  async getCurrentFleet(@CallerUserId() userId: UserId | null) {
+    if (!userId) {
       throw new UnauthorizedException();
     }
     try {
       return await this.fleetsManager.getFleet({
-        userId: userReference.getId(),
+        userId: userId,
       });
     } catch (error) {
       if (error instanceof RepositoryErrors.EntityNotFoundError) {
@@ -135,13 +146,16 @@ export class SingleFleetController {
   @UseGuards(UserAuthenticated)
   async getFleet(
     @Param('fleetId') fleetId: string | null,
-    @UserFromRequest() userReference: UserReference | null,
+    @CallerUserId({
+      required: true,
+    })
+    userId: UserId,
   ) {
     if (!fleetId) throw new BadRequestException('Missing fleetId');
     try {
       return await this.fleetsManager.getFleet({
         fleetId,
-        userId: userReference?.getId(),
+        userId,
       });
     } catch (error) {
       if (error instanceof RepositoryErrors.EntityNotFoundError) {
@@ -164,17 +178,17 @@ export class SingleFleetController {
   @UseGuards(UserAuthenticated)
   async listJoinRequests(
     @Param('fleetId') fleetId: string | null,
-    @UserFromRequest() userReference: UserReference | null,
+    @CallerUserId({
+      required: true,
+    })
+    userId: UserId,
   ) {
     if (!fleetId) {
       throw new BadRequestException('Missing fleetId');
     }
-    if (!userReference) {
-      throw new UnauthorizedException();
-    }
     return await this.fleetsManager.listJoinRequests({
       fleetId,
-      administratorId: userReference.getId(),
+      administratorId: userId,
     });
   }
 
@@ -190,15 +204,17 @@ export class SingleFleetController {
     description: 'The id of the fleet',
   })
   async requestToJoin(
-    @UserFromRequest() userReference: UserReference | null,
+    @CallerUserId({
+      required: true,
+    })
+    userId: UserId,
     @Param('fleetId') fleetId: string | null,
   ) {
-    if (!userReference) throw new HttpException('Unauthorized', 401);
     if (!fleetId) throw new BadRequestException('Missing fleetId');
     try {
       return await this.fleetsManager.requestToJoinFleet({
         fleetId,
-        userId: userReference.getId(),
+        userId: userId,
       });
     } catch (error) {
       for (const instance of [
@@ -228,18 +244,20 @@ export class SingleFleetController {
   })
   async respondToRequest(
     @Param('fleetId') fleetId: string | null,
-    @UserFromRequest() userReference: UserReference | null,
+    @CallerUserId({
+      required: true,
+    })
+    userId: UserId,
     @Body()
     body: RespondToRequestHttpBody,
   ) {
     if (!fleetId) throw new BadRequestException('Missing fleetId');
-    if (!userReference) throw new UnauthorizedException();
     try {
       return await this.fleetsManager.respondToFleetRequest({
         fleetId,
         userId: body.userId,
         accepted: body.accepted,
-        administratorId: userReference.getId(),
+        administratorId: userId,
       });
     } catch (error) {
       for (const instance of [
@@ -269,14 +287,16 @@ export class SingleFleetController {
   })
   async confirmPresenceAtStation(
     @Param('fleetId') fleetId: string | null,
-    @UserFromRequest() userReference: UserReference | null,
+    @CallerUserId({
+      required: true,
+    })
+    userId: UserId,
   ) {
     if (!fleetId) throw new BadRequestException('Missing fleetId');
-    if (!userReference) throw new UnauthorizedException();
     try {
       return await this.fleetsManager.confirmPresenceAtGathering({
         fleetId,
-        memberId: userReference.getId(),
+        memberId: userId,
       });
     } catch (error) {
       if (error instanceof RepositoryErrors.RepositoryError) {
@@ -299,14 +319,16 @@ export class SingleFleetController {
   })
   async endFleet(
     @Param('fleetId') fleetId: string | null,
-    @UserFromRequest() userReference: UserReference | null,
+    @CallerUserId({
+      required: true,
+    })
+    userId: UserId,
   ) {
     if (!fleetId) throw new BadRequestException('Missing fleetId');
-    if (!userReference) throw new UnauthorizedException();
     try {
       return await this.fleetsManager.endFleet({
         fleetId,
-        administratorId: userReference.getId(),
+        administratorId: userId,
       });
     } catch (error) {
       if (error instanceof RepositoryErrors.EntityNotFoundError) {
@@ -331,17 +353,19 @@ export class SingleFleetController {
     @Param('fleetId') fleetId: string | null,
     @Body()
     body: RemoveMemberHttpBody,
-    @UserFromRequest() userReference: UserReference | null,
+    @CallerUserId({
+      required: true,
+    })
+    userId: UserId,
   ) {
     const { userId: memberId } = body;
     if (!fleetId || !memberId)
-      throw new BadRequestException('Missing fleetId or userId');
-    if (!userReference) throw new UnauthorizedException();
+      throw new BadRequestException('Missing fleetId or memberId');
     try {
       return await this.fleetsManager.removeFleetMember({
         fleetId,
         memberId,
-        administratorId: userReference.getId(),
+        administratorId: userId,
       });
     } catch (error) {
       if (error instanceof RepositoryErrors.EntityNotFoundError) {

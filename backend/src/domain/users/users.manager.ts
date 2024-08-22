@@ -22,7 +22,7 @@ import {
 import { IEtnaApi } from './interfaces/etna-api.interface';
 import { IUsersRepository } from './interfaces/users-repository.interface';
 import { completeRegistrationOptionsSchema } from './validation/complete-registration-options.schema';
-import { findByEmailOptionsSchema } from './validation/find-by-email-options.schema';
+import { findUserByEmailOptionsSchema } from './validation/find-by-email-options.schema';
 import { verifyOTPOptionsSchema } from './validation/verify-otp-options.schema';
 @Injectable()
 export class UsersManager {
@@ -42,7 +42,7 @@ export class UsersManager {
   ) {}
 
   async startLogIn(options: FindUserByEmailOptions) {
-    findByEmailOptionsSchema.parse(options);
+    findUserByEmailOptionsSchema.parse(options);
     const existsResponse = await this.usersRepository.existsByEmail(
       options.email,
     );
@@ -64,7 +64,7 @@ export class UsersManager {
   }
 
   async startRegistration(options: FindUserByEmailOptions) {
-    findByEmailOptionsSchema.parse(options);
+    findUserByEmailOptionsSchema.parse(options);
     const { exists } = await this.usersRepository.existsByEmail(options.email);
     if (exists) {
       const issue: Issue = {
@@ -175,7 +175,7 @@ export class UsersManager {
     validateOptions = true,
   ) {
     if (validateOptions) {
-      findByEmailOptionsSchema.parse(options);
+      findUserByEmailOptionsSchema.parse(options);
     }
     const otp = await this.authService.createOTP(options.email);
     await this.mailsManager.sendOTPEmail(options.email, otp);

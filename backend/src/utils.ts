@@ -1,10 +1,18 @@
+import {
+  extendZodWithOpenApi,
+  OpenApiGeneratorV3,
+} from '@asteasolutions/zod-to-openapi';
+import {
+  ReferenceObject,
+  SchemaObject,
+} from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import { Request } from 'express';
 import * as fs from 'fs';
 import { Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
+import { z, ZodTypeAny } from 'zod';
 import { GenderConstraintEnum } from './domain/fleets/fleets.types';
-import { GenderEnum } from './domain/users/value-objects/gender.value-object';
-
+import { GenderEnum } from './domain/users/entities/user.types';
 export function getFileBuffer(path: string) {
   return fs.readFileSync(path);
 }
@@ -64,4 +72,16 @@ export function assertIsNotNull<T>(
   if (value === null || value === undefined) {
     throw new Error(message);
   }
+}
+
+extendZodWithOpenApi(z);
+export function generateOpenApiSchema<T extends ZodTypeAny>(
+  schema: T,
+): SchemaObject | ReferenceObject {
+  const generator = new OpenApiGeneratorV3([schema.openapi('generated')]);
+  const { components } = generator.generateComponents();
+  if (!components || !components.schemas) {
+    throw new Error('No schemas found');
+  }
+  return components.schemas.generated as SchemaObject | ReferenceObject;
 }

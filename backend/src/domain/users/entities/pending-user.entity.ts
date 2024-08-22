@@ -1,7 +1,7 @@
-import { GenderEnum } from '../value-objects/gender.value-object';
 import { BaseUser } from './base-user.entity';
 import {
   CreatePendingUserOptions,
+  GenderEnum,
   UserId,
   UserNetwork,
   UserNetworkEnumFromDatabase,
