@@ -2,7 +2,16 @@ import { Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { INotificationsService } from '../domain/_shared/notifications-service.interface';
 
-import firebaseServiceAccountKey from '@/../../firebase-service-account-key.json';
+// Check if /etc/secrets/firebase-service-account-key.json exists
+// If it does, use it as the service account key
+// Otherwise, use the one in the repository
+let firebaseServiceAccountKey;
+try {
+  firebaseServiceAccountKey = require('/etc/secrets/firebase-service-account-key.json');
+} catch (e) {
+  firebaseServiceAccountKey = require('@/../../firebase-service-account-key.json');
+}
+
 const app = admin.initializeApp({
   credential: admin.credential.cert(
     firebaseServiceAccountKey as admin.ServiceAccount,
