@@ -3,6 +3,7 @@ import { MAX_FLEET_MEMBERS } from '../../config/config-variables';
 import { FLEETS_DELAYS, FLEETS_SHORT_DELAYS } from '../../config/delays';
 import { EventStore } from '../../infrastructure/events/event-store.service';
 import { FeatureFlagsService } from '../../infrastructure/feature-flags/feature-flags.service';
+import { FirebaseService } from '../../infrastructure/firebase.service';
 import { FleetsRepository } from '../../infrastructure/repositories/fleets.repository';
 import { FleetsUnitOfWork } from '../../infrastructure/repositories/fleets.unit-of-work';
 import { UsersRepository } from '../../infrastructure/repositories/users.repository';
@@ -15,6 +16,7 @@ import { ValidationError } from '../_shared/errors/validation.error';
 import { IEventGateway } from '../_shared/event-gateway.interface';
 import { IEventStore } from '../_shared/event-store.interface';
 import { IFeatureFlagsService } from '../_shared/feature-flags-service.interface';
+import { INotificationsService } from '../_shared/notifications-service.interface';
 import { IRoutesService } from '../navigation/routes-service.interface';
 import { GenderEnum, UserNetwork } from '../users/entities/user.types';
 import { IUsersRepository } from '../users/interfaces/users-repository.interface';
@@ -78,6 +80,8 @@ export class FleetsManager {
     private readonly featureFlagsService: IFeatureFlagsService,
     @Inject(RoutesService)
     private readonly routesService: IRoutesService,
+    @Inject(FirebaseService)
+    private readonly notificationsService: INotificationsService,
   ) {}
   async createFleet(options: CreateFleetOptions) {
     const fleetsDelays = await this.getFleetsDelays();
@@ -142,9 +146,18 @@ export class FleetsManager {
 
   async startFleetGathering(fleetId: Id) {
     fleetId = entityIdSchema.parse(fleetId);
-    const fleet = await this.fleetsRepository.findById({
-      fleetId,
-    });
+    const fleet = await this.fleetsRepository.findById(
+      {
+        fleetId,
+      },
+      {
+        memberships: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    );
     // Vérifier si le rassemblement est déjà en cours
     if (fleet.hasGatheringStarted()) {
       throw new FleetGatheringAlreadyStartedError();
@@ -179,6 +192,20 @@ export class FleetsManager {
         fleetId,
       },
     });
+    // Envoer une notification à tous les membres du Fleet
+    if (fleet.members) {
+      const notificationTokens: string[] = [];
+      for (const member of fleet.members) {
+        if (member.notificationToken) {
+          notificationTokens.push(member.notificationToken);
+        }
+      }
+      this.notificationsService.sendNotification(
+        notificationTokens,
+        'Le rassemblement a commencé !',
+      );
+    }
+    // Supprimer la tâche planifiée pour le rassemblement
     await this.taskScheduler.deleteScheduledTask({
       type: 'start-gathering',
       fleetId,
@@ -237,6 +264,22 @@ export class FleetsManager {
         fleetId,
       },
     });
+
+    // Envoer une notification à tous les membres du Fleet
+    if (fleet.members) {
+      const notificationTokens: string[] = [];
+      for (const member of fleet.members) {
+        if (member.notificationToken) {
+          notificationTokens.push(member.notificationToken);
+        }
+      }
+      this.notificationsService.sendNotification(
+        notificationTokens,
+        'Le voyage a commencé !',
+      );
+    }
+
+    // Supprimer la tâche planifiée pour le départ
     await this.taskScheduler.deleteScheduledTask({
       type: 'start-trip',
       fleetId,
@@ -359,6 +402,7 @@ export class FleetsManager {
         status: FleetStatus.FORMATION,
       },
       {
+        administrator: true,
         memberships: {
           include: {
             user: true,
@@ -419,6 +463,12 @@ export class FleetsManager {
         userId: options.userId,
       },
     });
+    if (fleet.administrator?.notificationToken) {
+      this.notificationsService.sendNotification(
+        fleet.administrator.notificationToken,
+        `Un utilisateur a demandé à rejoindre votre covoiturage`,
+      );
+    }
     return joinRequest;
   }
 
@@ -545,31 +595,53 @@ export class FleetsManager {
           joinRequestId: joinRequest.id,
         },
       });
+      if (options.accepted === true) {
+        const notificationTokens: string[] = [];
+        if (fleet.members) {
+          for (const member of fleet.members) {
+            if (member.notificationToken) {
+              notificationTokens.push(member.notificationToken);
+            }
+          }
+        }
+        this.eventGateway.broadcastToUser(user.id, {
+          type: 'join-request-accepted',
+          payload: {
+            fleetId: options.fleetId,
+          },
+        });
+        this.eventGateway.broadcastToFleet(options.fleetId, {
+          type: 'user-joined-fleet',
+          payload: {
+            userId: user.id,
+          },
+        });
+        this.notificationsService.sendNotification(
+          notificationTokens,
+          'Un utilisateur a rejoint le Fleet !',
+        );
+        this.eventGateway.joinFleetRoom(options.fleetId, user.id);
+        if (user.notificationToken) {
+          this.notificationsService.sendNotification(
+            user.notificationToken,
+            `Vous avez été accepté dans un Fleet !`,
+          );
+        }
+      } else {
+        this.eventGateway.broadcastToUser(user.id, {
+          type: 'join-request-rejected',
+          payload: {
+            fleetId: options.fleetId,
+          },
+        });
+        if (user.notificationToken) {
+          this.notificationsService.sendNotification(
+            user.notificationToken,
+            `Votre demande a été refusée`,
+          );
+        }
+      }
     });
-
-    if (options.accepted === true) {
-      this.eventGateway.broadcastToUser(options.userId, {
-        type: 'join-request-accepted',
-        payload: {
-          fleetId: options.fleetId,
-        },
-      });
-      this.eventGateway.broadcastToFleet(options.fleetId, {
-        type: 'user-joined-fleet',
-        payload: {
-          userId: options.userId,
-        },
-      });
-      this.eventGateway.joinFleetRoom(options.fleetId, options.userId);
-    }
-    if (options.accepted === false) {
-      this.eventGateway.broadcastToUser(options.userId, {
-        type: 'join-request-rejected',
-        payload: {
-          fleetId: options.fleetId,
-        },
-      });
-    }
   }
   async scheduleDepartureTask(fleetId: Id, departureTime: Date) {
     return this.taskScheduler.scheduleDeparture(fleetId, departureTime);
@@ -633,6 +705,20 @@ export class FleetsManager {
           fleetId,
         },
       });
+
+      // Envoer une notification à tous les membres du fleet
+      if (fleet.members) {
+        const notificationTokens: string[] = [];
+        for (const member of fleet.members) {
+          if (member.notificationToken) {
+            notificationTokens.push(member.notificationToken);
+          }
+        }
+        this.notificationsService.sendNotification(
+          notificationTokens,
+          'Le Fleet est terminé !',
+        );
+      }
     });
   }
 
@@ -653,6 +739,39 @@ export class FleetsManager {
       type: 'presence-confirmed',
       payload: { fleetId, memberId },
     });
+
+    const fleet = await this.fleetsRepository.findById(
+      {
+        fleetId,
+      },
+      {
+        memberships: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    );
+    const presentMemberTokens: string[] = [];
+    if (fleet.members) {
+      for (const member of fleet.members) {
+        if (
+          member.notificationToken &&
+          member.hasConfirmedHisPresence &&
+          member.id !== memberId
+        ) {
+          presentMemberTokens.push(member.notificationToken);
+        }
+      }
+    }
+    this.eventGateway.broadcastToUser(memberId, {
+      type: 'presence-confirmed',
+      payload: { fleetId, memberId },
+    });
+    this.notificationsService.sendNotification(
+      presentMemberTokens,
+      'Un membre a confirmé sa présence au rassemblement !',
+    );
   }
 
   async removeFleetMember(options: FindByMemberAndAdminOptions) {

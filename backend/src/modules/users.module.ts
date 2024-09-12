@@ -4,6 +4,7 @@ import { MailsManager } from '../domain/mailing/mails.manager';
 import { UsersManager } from '../domain/users/users.manager';
 import { EventStore } from '../infrastructure/events/event-store.service';
 import { FeatureFlagsModule } from '../infrastructure/feature-flags/feature-flags.module';
+import { FirebaseService } from '../infrastructure/firebase.service';
 import { ResendService } from '../infrastructure/mailing/resend.service';
 import { SendgridService } from '../infrastructure/mailing/sendgrid.service';
 import { PrismaService } from '../infrastructure/persistence/read-database/prisma/prisma.service';
@@ -25,6 +26,7 @@ import { AuthModule } from './auth.module';
     SendgridService,
     ResendService,
     EtnaApi,
+    FirebaseService,
   ],
 })
 export class UsersModule {}

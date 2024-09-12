@@ -3,6 +3,7 @@ import { ConfigModule } from '../config/config.module';
 import { FleetsManager } from '../domain/fleets/fleets.manager';
 import { EventStore } from '../infrastructure/events/event-store.service';
 import { FeatureFlagsModule } from '../infrastructure/feature-flags/feature-flags.module';
+import { FirebaseService } from '../infrastructure/firebase.service';
 import { PrismaService } from '../infrastructure/persistence/read-database/prisma/prisma.service';
 import { FleetsRepository } from '../infrastructure/repositories/fleets.repository';
 import { FleetsUnitOfWork } from '../infrastructure/repositories/fleets.unit-of-work';
@@ -28,6 +29,7 @@ import { NavigationModule } from './navigation.module';
     EventGateway,
     EventBridgeTaskScheduler,
     EventStore,
+    FirebaseService,
   ],
   exports: [FleetsManager],
 })

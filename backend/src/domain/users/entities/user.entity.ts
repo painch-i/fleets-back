@@ -24,6 +24,7 @@ export class User extends BaseUser {
   fleet?: Fleet;
   declare isOnboarded: true;
   declare network: UserNetwork | null;
+  declare notificationToken: string | null;
 
   static fromDatabase(userFromDb: UserWithOptionalRelations) {
     const id = userFromDb.id;
@@ -48,6 +49,9 @@ export class User extends BaseUser {
     }
     user.network = userFromDb.network
       ? UserNetworkEnumFromDatabase[userFromDb.network]
+      : null;
+    user.notificationToken = userFromDb.notificationToken
+      ? userFromDb.notificationToken
       : null;
     return user;
   }
