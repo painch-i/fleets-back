@@ -16,6 +16,7 @@ import {
   CompleteRegistrationOptions,
   CreatePendingUserOptions,
   FindUserByEmailOptions,
+  SetNotificationTokenOptions,
   UserNetwork,
   VerifyOTPOptions,
 } from './entities/user.types';
@@ -194,5 +195,12 @@ export class UsersManager {
       includePending: true,
     });
     return user;
+  }
+
+  async setNotificationToken(options: SetNotificationTokenOptions) {
+    await this.usersRepository.setNotificationToken({
+      userId: options.updatedUserId,
+      token: options.updatePayload.token,
+    });
   }
 }

@@ -44,6 +44,8 @@ model User {
   isOnboarded Boolean
   createdAt   DateTime @default(now())
   network     UserNetwork?
+  notificationToken String?
+  notificationTokenUpdatedAt DateTime?
 }
 
 model OneTimePassword {

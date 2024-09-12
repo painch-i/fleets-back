@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { Id } from '../../../types';
-import { User } from '../entities/user.entity';
 import { PendingUser } from '../entities/pending-user.entity';
+import { User } from '../entities/user.entity';
 
 export type OneTimePassword = {
   email: string;
@@ -44,4 +44,5 @@ export interface IUsersRepository {
   getOTP(email: string): Promise<OneTimePassword>;
   deleteOTP(email: string): Promise<void>;
   updateUser(user: UserOrPendingUser): Promise<UserOrPendingUser>;
+  setNotificationToken(options: { userId: Id; token: string }): Promise<User>;
 }

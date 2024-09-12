@@ -4,6 +4,7 @@ import { Id } from '../../../types';
 import { completeRegistrationOptionsSchema } from '../validation/complete-registration-options.schema';
 import { createPendingUserOptionsSchema } from '../validation/create-pending-user-options.schema';
 import { findUserByEmailOptionsSchema } from '../validation/find-by-email-options.schema';
+import { setNotificationTokenOptionsSchema } from '../validation/set-notification-token-options.schema';
 import { verifyOTPOptionsSchema } from '../validation/verify-otp-options.schema';
 
 export type UserId = Id;
@@ -79,7 +80,9 @@ export const GenderEnumToDatabase: Record<GenderEnum, $Enums.Gender> = {
   [GenderEnum.FEMALE]: $Enums.Gender.FEMALE,
 };
 
-export type FindUserByEmailOptions = z.infer<typeof findUserByEmailOptionsSchema>;
+export type FindUserByEmailOptions = z.infer<
+  typeof findUserByEmailOptionsSchema
+>;
 
 export type CreatePendingUserOptions = z.infer<
   typeof createPendingUserOptionsSchema
@@ -98,3 +101,7 @@ export type CompleteRegistrationOptions = z.infer<
 >;
 
 export type VerifyOTPOptions = z.infer<typeof verifyOTPOptionsSchema>;
+
+export type SetNotificationTokenOptions = z.infer<
+  typeof setNotificationTokenOptionsSchema
+>;

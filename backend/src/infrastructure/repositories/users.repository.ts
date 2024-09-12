@@ -12,6 +12,7 @@ import {
   OneTimePassword,
   UserOrPendingUser,
 } from '../../domain/users/interfaces/users-repository.interface';
+import { Id } from '../../types';
 import { PrismaService } from '../persistence/read-database/prisma/prisma.service';
 @Injectable()
 export class UsersRepository implements IUsersRepository {
@@ -146,5 +147,21 @@ export class UsersRepository implements IUsersRepository {
         ? User.fromDatabase(user)
         : PendingUser.fromDatabase(user)
     ) as GetUserByIdReturnType<TIncludePending>;
+  }
+
+  async setNotificationToken(options: {
+    userId: Id;
+    token: string;
+  }): Promise<User> {
+    const updatedUser = await this.prisma.user.update({
+      where: {
+        id: options.userId,
+      },
+      data: {
+        notificationToken: options.token,
+        notificationTokenUpdatedAt: new Date(),
+      },
+    });
+    return User.fromDatabase(updatedUser);
   }
 }

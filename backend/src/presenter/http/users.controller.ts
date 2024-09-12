@@ -22,6 +22,7 @@ import { UserId } from '../../domain/users/entities/user.types';
 import { UsersManager } from '../../domain/users/users.manager';
 import { completeRegistrationPayloadSchema } from '../../domain/users/validation/complete-registration-options.schema';
 import { findUserByEmailOptionsSchema } from '../../domain/users/validation/find-by-email-options.schema';
+import { setNotificationTokenPayloadSchema } from '../../domain/users/validation/set-notification-token-options.schema';
 import { verifyOTPOptionsSchema } from '../../domain/users/validation/verify-otp-options.schema';
 import { CallerUserId } from '../../infrastructure/authentication/guards/decorators/caller-user-id.param-decorator';
 import { UserAuthenticated } from '../../infrastructure/authentication/guards/user-authenticated.auth-guard';
@@ -120,5 +121,30 @@ export class UsersController {
         throw new NotFoundException(error.message);
       }
     }
+  }
+
+  @Post(':userId/set-notification-token')
+  @UseGuards(UserAuthenticated)
+  @ApiTags('users')
+  @ApiBearerAuth()
+  @ApiParam({
+    name: 'userId',
+    description: 'User id',
+    type: String,
+  })
+  @ApiBody({
+    schema: generateOpenApiSchema(setNotificationTokenPayloadSchema),
+  })
+  async setNotificationToken(
+    @Body() body: any,
+    @CallerUserId({
+      required: true,
+    })
+    userId: UserId,
+  ) {
+    return await this.usersManager.setNotificationToken({
+      updatePayload: body,
+      updatedUserId: userId,
+    });
   }
 }
