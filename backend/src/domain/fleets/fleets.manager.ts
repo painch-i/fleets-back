@@ -200,10 +200,14 @@ export class FleetsManager {
           notificationTokens.push(member.notificationToken);
         }
       }
-      this.notificationsService.sendNotification(
-        notificationTokens,
-        'Le rassemblement a commencé !',
-      );
+      this.notificationsService.sendNotification({
+        token: notificationTokens,
+        message: 'Le rassemblement a commencé !',
+        data: {
+          type: 'fleet-gathering-started',
+          fleetId,
+        },
+      });
     }
     // Supprimer la tâche planifiée pour le rassemblement
     await this.taskScheduler.deleteScheduledTask({
@@ -273,10 +277,14 @@ export class FleetsManager {
           notificationTokens.push(member.notificationToken);
         }
       }
-      this.notificationsService.sendNotification(
-        notificationTokens,
-        'Le voyage a commencé !',
-      );
+      this.notificationsService.sendNotification({
+        token: notificationTokens,
+        message: 'Le trajet a commencé !',
+        data: {
+          type: 'fleet-trip-started',
+          fleetId,
+        },
+      });
     }
 
     // Supprimer la tâche planifiée pour le départ
@@ -464,10 +472,14 @@ export class FleetsManager {
       },
     });
     if (fleet.administrator?.notificationToken) {
-      this.notificationsService.sendNotification(
-        fleet.administrator.notificationToken,
-        `Un utilisateur a demandé à rejoindre votre covoiturage`,
-      );
+      this.notificationsService.sendNotification({
+        token: fleet.administrator.notificationToken,
+        message: `Un utilisateur a demandé à rejoindre votre covoiturage`,
+        data: {
+          type: 'join-request-received',
+          userId: options.userId,
+        },
+      });
     }
     return joinRequest;
   }
@@ -616,16 +628,24 @@ export class FleetsManager {
             userId: user.id,
           },
         });
-        this.notificationsService.sendNotification(
-          notificationTokens,
-          'Un utilisateur a rejoint le Fleet !',
-        );
+        this.notificationsService.sendNotification({
+          token: notificationTokens,
+          message: 'Un utilisateur a rejoint le Fleet !',
+          data: {
+            type: 'user-joined-fleet',
+            userId: user.id,
+          },
+        });
         this.eventGateway.joinFleetRoom(options.fleetId, user.id);
         if (user.notificationToken) {
-          this.notificationsService.sendNotification(
-            user.notificationToken,
-            `Vous avez été accepté dans un Fleet !`,
-          );
+          this.notificationsService.sendNotification({
+            token: user.notificationToken,
+            message: `Vous avez été accepté dans un Fleet !`,
+            data: {
+              type: 'join-request-accepted',
+              fleetId: options.fleetId,
+            },
+          });
         }
       } else {
         this.eventGateway.broadcastToUser(user.id, {
@@ -635,10 +655,14 @@ export class FleetsManager {
           },
         });
         if (user.notificationToken) {
-          this.notificationsService.sendNotification(
-            user.notificationToken,
-            `Votre demande a été refusée`,
-          );
+          this.notificationsService.sendNotification({
+            token: user.notificationToken,
+            message: `Votre demande a été refusée`,
+            data: {
+              type: 'join-request-rejected',
+              fleetId: options.fleetId,
+            },
+          });
         }
       }
     });
@@ -714,10 +738,14 @@ export class FleetsManager {
             notificationTokens.push(member.notificationToken);
           }
         }
-        this.notificationsService.sendNotification(
-          notificationTokens,
-          'Le Fleet est terminé !',
-        );
+        this.notificationsService.sendNotification({
+          token: notificationTokens,
+          message: 'Le Fleet est terminé !',
+          data: {
+            type: 'fleet-ended',
+            fleetId,
+          },
+        });
       }
     });
   }
@@ -768,10 +796,15 @@ export class FleetsManager {
       type: 'presence-confirmed',
       payload: { fleetId, memberId },
     });
-    this.notificationsService.sendNotification(
-      presentMemberTokens,
-      'Un membre a confirmé sa présence au rassemblement !',
-    );
+    this.notificationsService.sendNotification({
+      token: presentMemberTokens,
+      message: 'Un membre a confirmé sa présence au rassemblement !',
+      data: {
+        type: 'presence-confirmed',
+        fleetId,
+        memberId,
+      },
+    });
   }
 
   async removeFleetMember(options: FindByMemberAndAdminOptions) {

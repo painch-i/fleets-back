@@ -1,3 +1,8 @@
+export type SendNotificationOptions = {
+  token: string | string[];
+  message: string;
+  data: any;
+};
 export interface INotificationsService {
-  sendNotification(token: string | string[], message: string): Promise<void>;
+  sendNotification(options: SendNotificationOptions): Promise<void>;
 }
