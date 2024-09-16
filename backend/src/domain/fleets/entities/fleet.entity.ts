@@ -15,7 +15,7 @@ import {
   GenderConstraintEnum,
   LineTaken,
 } from '../fleets.types';
-import { lineTakenSchema } from '../validation-schemas/line-taken.schema';
+import { originalLineTakenSchema } from '../validation-schemas/line-taken.schema';
 import { variableStringSchema } from '../validation-schemas/variable-string.schema';
 
 export class Fleet extends IEntity {
@@ -89,7 +89,9 @@ export class Fleet extends IEntity {
       );
     }
     fleet.status = FleetStatusFromDatabase[fleetFromDb.status];
-    fleet.linesTaken = z.array(lineTakenSchema).parse(fleetFromDb.linesTaken);
+    fleet.linesTaken = z
+      .array(originalLineTakenSchema)
+      .parse(fleetFromDb.linesTaken);
     fleet.network = fleetFromDb.network
       ? UserNetworkEnumFromDatabase[fleetFromDb.network]
       : null;
