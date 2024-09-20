@@ -4,18 +4,18 @@ import { Id } from '../../../types';
 import { Station } from '../../navigation/station.entity';
 import { Member, User } from '../../users/entities/user.entity';
 import {
-  UserNetwork,
-  UserNetworkEnumFromDatabase,
+    UserNetwork,
+    UserNetworkEnumFromDatabase,
 } from '../../users/entities/user.types';
 import {
-  CreateFleetOptions,
-  FleetStatus,
-  FleetStatusFromDatabase,
-  FleetWithOptionalRelations,
-  GenderConstraintEnum,
-  LineTaken,
+    CreateFleetOptions,
+    FleetStatus,
+    FleetStatusFromDatabase,
+    FleetWithOptionalRelations,
+    GenderConstraintEnum,
+    LineTaken,
 } from '../fleets.types';
-import { originalLineTakenSchema } from '../validation-schemas/line-taken.schema';
+import { lineTakenSchema } from '../validation-schemas/line-taken.schema';
 import { variableStringSchema } from '../validation-schemas/variable-string.schema';
 
 export class Fleet extends IEntity {
@@ -90,7 +90,7 @@ export class Fleet extends IEntity {
     }
     fleet.status = FleetStatusFromDatabase[fleetFromDb.status];
     fleet.linesTaken = z
-      .array(originalLineTakenSchema)
+      .array(lineTakenSchema)
       .parse(fleetFromDb.linesTaken);
     fleet.network = fleetFromDb.network
       ? UserNetworkEnumFromDatabase[fleetFromDb.network]

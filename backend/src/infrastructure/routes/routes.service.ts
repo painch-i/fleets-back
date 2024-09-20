@@ -36,11 +36,12 @@ export class RoutesService implements IRoutesService {
       authClient: auth.fromJSON(keys),
     });
   }
-  compare: any;
+
   async getRouteSuggestionsBetweenLocations(
     options: GetRouteSuggestionsBetweenLocationsOptions,
   ): Promise<RouteSuggestion[]> {
     const routeSuggestions: RouteSuggestion[] = [];
+    const existingRoutesHashes = new Set();
     const [routesResponse] = await this.routesClient.computeRoutes(
       {
         languageCode: 'fr',
@@ -114,10 +115,13 @@ export class RoutesService implements IRoutesService {
         }
       }
       const hash = this.computeHash(linesTakenForRoute);
-      routeSuggestions.push({
-        hash,
-        linesTaken: linesTakenForRoute,
-      });
+      if (!existingRoutesHashes.has(hash)) {
+        existingRoutesHashes.add(hash);
+        routeSuggestions.push({
+          hash,
+          linesTaken: linesTakenForRoute,
+        });
+      }
     }
     const emptyRouteHash = this.computeHash([]);
     routeSuggestions.push({

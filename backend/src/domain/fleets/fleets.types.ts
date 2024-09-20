@@ -1,8 +1,8 @@
 import { $Enums, Prisma } from '@prisma/client';
 import { z } from 'zod';
 import {
-  UserId,
-  UserMembershipWithOptionalRelations,
+    UserId,
+    UserMembershipWithOptionalRelations,
 } from '../users/entities/user.types';
 import { FleetId } from './entities/fleet.entity';
 import { getCreateFleetOptionsSchema } from './validation-schemas/create-fleet-options.schema';
@@ -11,7 +11,7 @@ import { findByAdminOptionsSchema } from './validation-schemas/find-by-admin-opt
 import { findByIdOptionsSchema } from './validation-schemas/find-by-id-options.schema';
 import { findByMemberAndAdminOptionsSchema } from './validation-schemas/find-by-member-options.schema';
 import { getFleetOptionsSchema } from './validation-schemas/get-fleet-options.schema';
-import { originalLineTakenSchema } from './validation-schemas/line-taken.schema';
+import { lineTakenSchema } from './validation-schemas/line-taken.schema';
 import { listJoinRequestOptionsSchema } from './validation-schemas/list-join-request-options.schema';
 import { respondToRequestOptionsSchema } from './validation-schemas/respond-to-request-options.schema';
 import { getSearchFleetsOptionsSchema } from './validation-schemas/search-fleets-options.schema';
@@ -122,4 +122,4 @@ export type FleetWithOptionalRelations = Omit<
 > &
   Partial<Pick<FleetWithRelations, FleetRelation>>;
 
-export type LineTaken = z.infer<typeof originalLineTakenSchema>;
+export type LineTaken = z.infer<typeof lineTakenSchema>;

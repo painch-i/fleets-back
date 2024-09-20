@@ -3,7 +3,7 @@ import { getDepartureTimeSchema } from './departure-time.schema';
 import { entityIdSchema } from './entity-id.schema';
 import { getGatheringDelaySchema } from './gathering-delay.schema';
 import { genderConstraintConfigSchema } from './gender-constraint-config.schema';
-import { originalLineTakenSchema } from './line-taken.schema';
+import { lineTakenSchema } from './line-taken.schema';
 import { variableStringSchema } from './variable-string.schema';
 
 export type GetCreateFleetOptionsSchemaOptions = {
@@ -26,7 +26,7 @@ export function getCreateFleetPayloadSchema(
     ),
     route: z.object({
       hash: z.string(),
-      linesTaken: z.array(originalLineTakenSchema),
+      linesTaken: z.array(lineTakenSchema),
     }),
     genderConstraintConfig: genderConstraintConfigSchema,
   });

@@ -7,7 +7,7 @@ import { Line, LineId } from './line.entity';
 import { INavigationCsvRepository } from './navigation-csv-provider.interface';
 import { INavigationRepository } from './navigation-repository.interface';
 import { GetSuggestionsBetweenStationsOptions } from './navigation.types';
-import { IRoutesService, RouteSuggestion } from './routes-service.interface';
+import { IRoutesService } from './routes-service.interface';
 import { Station } from './station.entity';
 import { getSuggestionsBetweenStationsOptionsSchema } from './validation/get-directions-between-stations-options.schema';
 
@@ -98,16 +98,7 @@ export class NavigationManager {
           longitude: endStation.longitude,
         },
       });
-    const hashHistory = new Set();
-
-    return suggestions.reduce<RouteSuggestion[]>((acc, item) => {
-      if (item.linesTaken.length > 0 && !hashHistory.has(item.hash)) {
-        hashHistory.add(item.hash);
-        acc.push(item);
-      }
-
-      return acc;
-    }, []);
+    return suggestions;
   }
 
   private async refreshLinesData(): Promise<void> {
