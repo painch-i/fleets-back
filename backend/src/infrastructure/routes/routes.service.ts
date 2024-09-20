@@ -93,18 +93,9 @@ export class RoutesService implements IRoutesService {
           }
           let vehicle: LineTaken['vehicle'] | undefined;
           if (step.transitDetails.transitLine.vehicle) {
-            let name = {
-              text: {
-                text: '',
-              },
-            };
-            if (step.transitDetails.transitLine.vehicle.name) {
-              name = {
-                text: {
-                  text: step.transitDetails.transitLine.vehicle.name
-                    .text as string,
-                },
-              };
+            let name: string = '';
+            if (step.transitDetails.transitLine.vehicle.name?.text) {
+              name = step.transitDetails.transitLine.vehicle.name.text;
             }
             vehicle = {
               name,

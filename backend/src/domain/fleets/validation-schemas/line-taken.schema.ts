@@ -19,3 +19,17 @@ export const lineTakenSchema = z.object({
     })
     .optional(),
 });
+
+export const originalLineTakenSchema = z.object({
+  name: z.string(),
+  color: z.string(),
+  nameShort: z.string(),
+  textColor: z.string().regex(/^#[0-9a-f]{6}$/),
+  vehicle: z
+    .object({
+      name: z.string().optional(),
+      type: z.string(),
+      iconUri: z.string(),
+    })
+    .optional(),
+});
