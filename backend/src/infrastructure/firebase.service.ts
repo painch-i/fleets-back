@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
-import { INotificationsService } from '../domain/_shared/notifications-service.interface';
+import {
+  INotificationsService,
+  SendNotificationOptions,
+} from '../domain/_shared/notifications-service.interface';
 
 // Check if /etc/secrets/firebase-service-account-key.json exists
 // If it does, use it as the service account key
@@ -24,13 +27,15 @@ const app = admin.initializeApp({
 export class FirebaseService implements INotificationsService {
   constructor() {}
 
-  async sendNotification(token: string, message: string): Promise<void> {
-    await app.messaging().send({
-      token,
+  async sendNotification(options: SendNotificationOptions): Promise<void> {
+    await app.messaging().sendEachForMulticast({
+      tokens:
+        typeof options.token === 'string' ? [options.token] : options.token,
       notification: {
         title: 'Fleets',
-        body: message,
+        body: options.message,
       },
+      data: options.data,
     });
   }
 }
