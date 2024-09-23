@@ -32,7 +32,7 @@ export class FirebaseService implements INotificationsService {
       tokens:
         typeof options.token === 'string' ? [options.token] : options.token,
       notification: {
-        title: 'Fleets',
+        title: options.title,
         body: options.message,
       },
       data: options.data,

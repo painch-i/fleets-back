@@ -28,7 +28,7 @@ import {
   FleetIsFullError,
   FleetTripAlreadyStartedError,
   JoinRequestAlreadyHandledError,
-  NotEnoughMembersInFleet,
+  NotEnoughMembersInFleet as NotEnoughMembersInFleetError,
   UserAlreadyHasAFleetError,
   UserAlreadyRequestedToJoinFleetError,
   UserNotMeetingConstraintsError,
@@ -164,7 +164,8 @@ export class FleetsManager {
     }
 
     if (fleet.members && fleet.members.length === 1) {
-      throw new NotEnoughMembersInFleet();
+      await this.cancelFleet(fleetId);
+      throw new NotEnoughMembersInFleetError();
     }
 
     fleet.startGathering();
@@ -202,6 +203,7 @@ export class FleetsManager {
       }
       this.notificationsService.sendNotification({
         token: notificationTokens,
+        title: fleet.name,
         message: 'Le rassemblement a commencé !',
         data: {
           type: 'fleet-gathering-started',
@@ -239,7 +241,7 @@ export class FleetsManager {
     await this.kickAbsentMembers(fleet);
     if (fleet.members && fleet.members.length === 1) {
       await this.cancelFleet(fleetId);
-      throw new NotEnoughMembersInFleet();
+      throw new NotEnoughMembersInFleetError();
     }
 
     // Mettre à jour l'état du Fleet pour indiquer que le voyage a commencé
@@ -279,6 +281,7 @@ export class FleetsManager {
       }
       this.notificationsService.sendNotification({
         token: notificationTokens,
+        title: fleet.name,
         message: 'Le trajet a commencé !',
         data: {
           type: 'fleet-trip-started',
@@ -474,7 +477,8 @@ export class FleetsManager {
     if (fleet.administrator?.notificationToken) {
       this.notificationsService.sendNotification({
         token: fleet.administrator.notificationToken,
-        message: `Un utilisateur a demandé à rejoindre votre covoiturage`,
+        title: fleet.name,
+        message: `Un utilisateur a demandé à rejoindre votre Fleet !`,
         data: {
           type: 'join-request-received',
           userId: options.userId,
@@ -630,6 +634,7 @@ export class FleetsManager {
         });
         this.notificationsService.sendNotification({
           token: notificationTokens,
+          title: fleet.name,
           message: 'Un utilisateur a rejoint le Fleet !',
           data: {
             type: 'user-joined-fleet',
@@ -640,6 +645,7 @@ export class FleetsManager {
         if (user.notificationToken) {
           this.notificationsService.sendNotification({
             token: user.notificationToken,
+            title: fleet.name,
             message: `Vous avez été accepté dans un Fleet !`,
             data: {
               type: 'join-request-accepted',
@@ -657,6 +663,7 @@ export class FleetsManager {
         if (user.notificationToken) {
           this.notificationsService.sendNotification({
             token: user.notificationToken,
+            title: fleet.name,
             message: `Votre demande a été refusée`,
             data: {
               type: 'join-request-rejected',
@@ -692,10 +699,15 @@ export class FleetsManager {
     options = findByAdminOptionsSchema.parse(options);
     const { fleetId, administratorId } = options;
     await this.unitOfWork.withTransaction(async (fleetsRepository) => {
-      const fleet = await fleetsRepository.findById({
-        fleetId,
-        administratorId,
-      });
+      const fleet = await fleetsRepository.findById(
+        {
+          fleetId,
+          administratorId,
+        },
+        {
+          memberships: true,
+        },
+      );
 
       // Vérifier si le fleet a déjà été terminé
       if (fleet.status === FleetStatus.ARRIVED) {
@@ -740,6 +752,7 @@ export class FleetsManager {
         }
         this.notificationsService.sendNotification({
           token: notificationTokens,
+          title: fleet.name,
           message: 'Le Fleet est terminé !',
           data: {
             type: 'fleet-ended',
@@ -798,6 +811,7 @@ export class FleetsManager {
     });
     this.notificationsService.sendNotification({
       token: presentMemberTokens,
+      title: fleet.name,
       message: 'Un membre a confirmé sa présence au rassemblement !',
       data: {
         type: 'presence-confirmed',
