@@ -705,7 +705,11 @@ export class FleetsManager {
           administratorId,
         },
         {
-          memberships: true,
+          memberships: {
+            include: {
+              user: true,
+            },
+          },
         },
       );
 
