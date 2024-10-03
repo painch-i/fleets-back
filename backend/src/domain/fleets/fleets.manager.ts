@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { MAX_FLEET_MEMBERS } from '../../config/config-variables';
 import { FLEETS_DELAYS, FLEETS_SHORT_DELAYS } from '../../config/delays';
 import { EventStore } from '../../infrastructure/events/event-store.service';
@@ -8,7 +8,7 @@ import { FleetsRepository } from '../../infrastructure/repositories/fleets.repos
 import { FleetsUnitOfWork } from '../../infrastructure/repositories/fleets.unit-of-work';
 import { UsersRepository } from '../../infrastructure/repositories/users.repository';
 import { RoutesService } from '../../infrastructure/routes/routes.service';
-import { EventBridgeTaskScheduler } from '../../infrastructure/scheduler/event-bridge-task-scheduler.service';
+import { LocalTaskSchedulerService } from '../../infrastructure/scheduler/local-task-scheduler.service';
 import { EventGateway } from '../../presenter/event/event.gateway';
 import { Id } from '../../types';
 import { isUserMeetingConstraints } from '../../utils';
@@ -63,6 +63,8 @@ import { getSearchFleetsOptionsSchema } from './validation-schemas/search-fleets
 
 @Injectable()
 export class FleetsManager {
+  private readonly logger = new Logger(FleetsManager.name);
+
   constructor(
     @Inject(FleetsRepository)
     private readonly fleetsRepository: IFleetsRepository,
@@ -72,7 +74,7 @@ export class FleetsManager {
     private readonly unitOfWork: IFleetsUnitOfWork,
     @Inject(EventGateway)
     private readonly eventGateway: IEventGateway,
-    @Inject(EventBridgeTaskScheduler)
+    @Inject(LocalTaskSchedulerService)
     private readonly taskScheduler: ITaskScheduler,
     @Inject(EventStore)
     private readonly eventStore: IEventStore,
@@ -84,251 +86,439 @@ export class FleetsManager {
     private readonly notificationsService: INotificationsService,
   ) {}
   async createFleet(options: CreateFleetOptions) {
-    const fleetsDelays = await this.getFleetsDelays();
-    const validationSchema = getCreateFleetOptionsSchema({
-      minDepartureDelay: fleetsDelays.MIN_DEPARTURE_MINUTES_DELAY,
-      minGatheringDelay: fleetsDelays.MIN_GATHERING_DELAY,
-      maxGatheringDelay: fleetsDelays.MAX_GATHERING_DELAY,
-    });
-    validationSchema.parse(options);
-    const isHashValid = await this.routesService.validateHash(
-      options.route.hash,
-      options.route.linesTaken,
+    this.logger.log(
+      `Start creating fleet with administrator ID: ${options.administratorId}`,
     );
-    if (!isHashValid) {
-      throw new ValidationError('Invalid route hash', [
-        {
-          code: 'invalid-hash',
-          path: ['route', 'hash'],
-        },
-      ]);
-    }
-    const administrator = await this.usersRepository.getUserById({
-      id: options.administratorId,
-      includePending: false,
-    });
-    if (administrator.fleetId) {
-      throw new UserAlreadyHasAFleetError();
-    }
-    const fleet = new Fleet();
-    fleet.create(options);
-    fleet.network = administrator.network;
-    let genderConstraint = GenderConstraintEnum.NO_CONSTRAINT;
-    if (
-      options.genderConstraintConfig ===
-      GenderConstraintCreationConfigEnum.USER_GENDER_ONLY
-    ) {
-      switch (administrator.gender) {
-        case GenderEnum.FEMALE:
-          genderConstraint = GenderConstraintEnum.FEMALE_ONLY;
-          break;
-        case GenderEnum.MALE:
-          genderConstraint = GenderConstraintEnum.MALE_ONLY;
-          break;
+
+    try {
+      // Fetching fleet delays
+      this.logger.verbose('Fetching fleet delays...');
+      const fleetsDelays = await this.getFleetsDelays();
+      this.logger.debug(
+        `Fleet delays fetched: ${JSON.stringify(fleetsDelays)}`,
+      );
+
+      // Validating the create fleet options
+      this.logger.verbose('Validating create fleet options...');
+      const validationSchema = getCreateFleetOptionsSchema({
+        minDepartureDelay: fleetsDelays.MIN_DEPARTURE_MINUTES_DELAY,
+        minGatheringDelay: fleetsDelays.MIN_GATHERING_DELAY,
+        maxGatheringDelay: fleetsDelays.MAX_GATHERING_DELAY,
+      });
+      validationSchema.parse(options);
+      this.logger.debug('Create fleet options validation successful.');
+
+      // Validating route hash
+      this.logger.verbose(`Validating route hash: ${options.route.hash}`);
+      const isHashValid = await this.routesService.validateHash(
+        options.route.hash,
+        options.route.linesTaken,
+      );
+      if (!isHashValid) {
+        this.logger.error(
+          `Invalid route hash for route: ${options.route.hash}`,
+        );
+        throw new ValidationError('Invalid route hash', [
+          {
+            code: 'invalid-hash',
+            path: ['route', 'hash'],
+          },
+        ]);
       }
+      this.logger.debug('Route hash validation successful.');
+
+      // Fetching the administrator user
+      this.logger.verbose('Fetching administrator user...');
+      const administrator = await this.usersRepository.getUserById({
+        id: options.administratorId,
+        includePending: false,
+      });
+      this.logger.debug(
+        `Administrator user fetched: ${JSON.stringify(administrator)}`,
+      );
+
+      if (administrator.fleetId) {
+        this.logger.warn(
+          `Administrator with ID ${administrator.id} already has a fleet: ${administrator.fleetId}`,
+        );
+        throw new UserAlreadyHasAFleetError();
+      }
+
+      // Creating the fleet
+      this.logger.verbose('Creating fleet...');
+      const fleet = new Fleet();
+      fleet.create(options);
+      fleet.network = administrator.network;
+      this.logger.log(`Fleet created with ID: ${fleet.id}`);
+
+      // Setting gender constraint
+      let genderConstraint = GenderConstraintEnum.NO_CONSTRAINT;
+      if (
+        options.genderConstraintConfig ===
+        GenderConstraintCreationConfigEnum.USER_GENDER_ONLY
+      ) {
+        switch (administrator.gender) {
+          case GenderEnum.FEMALE:
+            genderConstraint = GenderConstraintEnum.FEMALE_ONLY;
+            break;
+          case GenderEnum.MALE:
+            genderConstraint = GenderConstraintEnum.MALE_ONLY;
+            break;
+        }
+      }
+      fleet.setGenderConstraint(genderConstraint);
+      this.logger.debug(`Gender constraint set: ${genderConstraint}`);
+
+      // Persisting the fleet
+      this.logger.verbose(`Persisting fleet with ID: ${fleet.id}`);
+      await this.fleetsRepository.persist(fleet);
+      this.logger.log(`Fleet persisted successfully with ID: ${fleet.id}`);
+
+      // Storing event in the event store
+      this.logger.verbose('Storing fleet creation event...');
+      await this.eventStore.store({
+        aggregateId: fleet.id,
+        aggregateType: 'fleet',
+        createdAt: new Date(),
+        eventType: 'fleet-created',
+        payload: {
+          fleetId: fleet.id,
+        },
+      });
+      this.logger.debug('Fleet creation event stored successfully.');
+
+      // Adding administrator to the fleet room
+      this.logger.verbose(
+        `Joining administrator ${administrator.id} to fleet room ${fleet.id}`,
+      );
+      this.eventGateway.joinFleetRoom(fleet.id, administrator.id);
+
+      // Scheduling tasks
+      this.logger.verbose(
+        `Scheduling departure task for fleet ID: ${fleet.id}`,
+      );
+      this.scheduleDepartureTask(fleet.id, fleet.departureTime);
+
+      this.logger.verbose(
+        `Scheduling gathering task for fleet ID: ${fleet.id}`,
+      );
+      this.scheduleGatheringTask(fleet.id, fleet.gatheringTime);
+
+      this.logger.log(
+        `Fleet creation completed successfully for fleet ID: ${fleet.id}`,
+      );
+      return fleet;
+    } catch (error) {
+      this.logger.error(
+        `Failed to create fleet: ${error.message}`,
+        error.stack,
+      );
+      throw error;
     }
-    fleet.setGenderConstraint(genderConstraint);
-    await this.fleetsRepository.persist(fleet);
-    await this.eventStore.store({
-      aggregateId: fleet.id,
-      aggregateType: 'fleet',
-      createdAt: new Date(),
-      eventType: 'fleet-created',
-      payload: {
-        fleetId: fleet.id,
-      },
-    });
-    this.eventGateway.joinFleetRoom(fleet.id, administrator.id);
-    this.scheduleDepartureTask(fleet.id, fleet.departureTime);
-    this.scheduleGatheringTask(fleet.id, fleet.gatheringTime);
-    return fleet;
   }
 
   async startFleetGathering(fleetId: Id) {
-    fleetId = entityIdSchema.parse(fleetId);
-    const fleet = await this.fleetsRepository.findById(
-      {
-        fleetId,
-      },
-      {
-        memberships: {
-          include: {
-            user: true,
+    this.logger.log(
+      `Starting fleet gathering process for fleet ID: ${fleetId}`,
+    );
+
+    try {
+      // Validate fleetId schema
+      this.logger.verbose('Validating fleet ID...');
+      fleetId = entityIdSchema.parse(fleetId);
+      this.logger.debug(`Fleet ID validated: ${fleetId}`);
+
+      // Fetch fleet details with memberships and users
+      this.logger.verbose(`Fetching fleet details for fleet ID: ${fleetId}`);
+      const fleet = await this.fleetsRepository.findById(
+        { fleetId },
+        {
+          memberships: {
+            include: {
+              user: true,
+            },
           },
         },
-      },
-    );
-    // Vérifier si le rassemblement est déjà en cours
-    if (fleet.hasGatheringStarted()) {
-      throw new FleetGatheringAlreadyStartedError();
-    }
+      );
+      this.logger.debug(`Fetched fleet details: ${JSON.stringify(fleet)}`);
 
-    if (fleet.members && fleet.members.length === 1) {
-      await this.cancelFleet(fleetId);
-      throw new NotEnoughMembersInFleetError();
-    }
-
-    fleet.startGathering();
-    // Mettre à jour le statut du Fleet dans la base de données
-    await this.fleetsRepository.update(fleetId, {
-      status: FleetStatusToDatabase[fleet.status],
-    });
-    await this.fleetsRepository.clearJoinRequests({
-      fleetId,
-    });
-    // Committer les changements dans la base de données d'événements
-    await this.eventStore.store({
-      aggregateId: fleetId,
-      aggregateType: 'fleet',
-      createdAt: new Date(),
-      eventType: 'fleet-gathering-started',
-      payload: {
-        fleetId,
-      },
-    });
-    // Envoyer un événement pour informer les utilisateurs
-    this.eventGateway.broadcastToFleet(fleetId, {
-      type: 'fleet-gathering-started',
-      payload: {
-        fleetId,
-      },
-    });
-    // Envoer une notification à tous les membres du Fleet
-    if (fleet.members) {
-      const notificationTokens: string[] = [];
-      for (const member of fleet.members) {
-        if (member.notificationToken) {
-          notificationTokens.push(member.notificationToken);
-        }
+      // Check if gathering has already started
+      if (fleet.hasGatheringStarted()) {
+        this.logger.warn(`Gathering already started for fleet ID: ${fleetId}`);
+        throw new FleetGatheringAlreadyStartedError();
       }
-      this.notificationsService.sendNotification({
-        token: notificationTokens,
-        title: fleet.name,
-        message: 'Le rassemblement a commencé !',
-        data: {
-          type: 'fleet-gathering-started',
+
+      // Check if there are enough members in the fleet
+      if (fleet.members && fleet.members.length === 1) {
+        this.logger.warn(
+          `Not enough members in fleet ID: ${fleetId}, canceling fleet.`,
+        );
+        await this.cancelFleet(fleetId);
+        throw new NotEnoughMembersInFleetError();
+      }
+
+      // Start gathering process
+      this.logger.verbose(`Starting gathering for fleet ID: ${fleetId}`);
+      fleet.startGathering();
+
+      // Update fleet status in the database
+      this.logger.verbose(
+        `Updating fleet status in database for fleet ID: ${fleetId}`,
+      );
+      await this.fleetsRepository.update(fleetId, {
+        status: FleetStatusToDatabase[fleet.status],
+      });
+      this.logger.log(
+        `Fleet status updated successfully for fleet ID: ${fleetId}`,
+      );
+
+      // Clear join requests
+      this.logger.verbose(`Clearing join requests for fleet ID: ${fleetId}`);
+      await this.fleetsRepository.clearJoinRequests({ fleetId });
+      this.logger.log(`Join requests cleared for fleet ID: ${fleetId}`);
+
+      // Store event in the event store
+      this.logger.verbose(
+        `Storing fleet gathering started event for fleet ID: ${fleetId}`,
+      );
+      await this.eventStore.store({
+        aggregateId: fleetId,
+        aggregateType: 'fleet',
+        createdAt: new Date(),
+        eventType: 'fleet-gathering-started',
+        payload: {
           fleetId,
         },
       });
+      this.logger.debug('Fleet gathering started event stored successfully');
+
+      // Broadcast event to fleet members
+      this.logger.verbose(
+        `Broadcasting fleet gathering started event to fleet ID: ${fleetId}`,
+      );
+      this.eventGateway.broadcastToFleet(fleetId, {
+        type: 'fleet-gathering-started',
+        payload: {
+          fleetId,
+        },
+      });
+      this.logger.log(
+        `Fleet gathering event broadcasted successfully for fleet ID: ${fleetId}`,
+      );
+
+      // Send notifications to fleet members
+      if (fleet.members) {
+        this.logger.verbose('Sending notifications to fleet members...');
+        const notificationTokens: string[] = [];
+        for (const member of fleet.members) {
+          if (member.notificationToken) {
+            notificationTokens.push(member.notificationToken);
+          }
+        }
+        if (notificationTokens.length > 0) {
+          this.notificationsService.sendNotification({
+            token: notificationTokens,
+            title: fleet.name,
+            message: 'Le rassemblement a commencé !',
+            data: {
+              type: 'fleet-gathering-started',
+              fleetId,
+            },
+          });
+          this.logger.log(
+            `Notifications sent to ${notificationTokens.length} members of fleet ID: ${fleetId}`,
+          );
+        } else {
+          this.logger.warn(
+            `No notification tokens found for fleet ID: ${fleetId}`,
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to start gathering for fleet ID: ${fleetId}`,
+        error.stack,
+      );
+      throw error;
     }
-    // Supprimer la tâche planifiée pour le rassemblement
-    await this.taskScheduler.deleteScheduledTask({
-      type: 'start-gathering',
-      fleetId,
-    });
   }
 
   async startFleetTrip(fleetId: Id) {
-    fleetId = entityIdSchema.parse(fleetId);
-    const fleet = await this.fleetsRepository.findById(
-      {
-        fleetId,
-      },
-      {
-        memberships: {
-          include: {
-            user: true,
+    this.logger.log(`Starting trip for fleet ID: ${fleetId}`);
+
+    try {
+      // Validate fleetId schema
+      this.logger.verbose('Validating fleet ID...');
+      fleetId = entityIdSchema.parse(fleetId);
+      this.logger.debug(`Fleet ID validated: ${fleetId}`);
+
+      // Fetch fleet details with memberships and users
+      this.logger.verbose(`Fetching fleet details for fleet ID: ${fleetId}`);
+      const fleet = await this.fleetsRepository.findById(
+        { fleetId },
+        {
+          memberships: {
+            include: {
+              user: true,
+            },
           },
         },
-      },
-    );
+      );
+      this.logger.debug(`Fetched fleet details: ${JSON.stringify(fleet)}`);
 
-    // Vérifier si le voyage a déjà commencé
-    if (fleet.hasTripStarted()) {
-      throw new FleetTripAlreadyStartedError();
-    }
-
-    await this.kickAbsentMembers(fleet);
-    if (fleet.members && fleet.members.length === 1) {
-      await this.cancelFleet(fleetId);
-      throw new NotEnoughMembersInFleetError();
-    }
-
-    // Mettre à jour l'état du Fleet pour indiquer que le voyage a commencé
-    fleet.startTrip();
-
-    // Mettre à jour le statut du Fleet dans la base de données
-    await this.fleetsRepository.update(fleetId, {
-      status: FleetStatusToDatabase[fleet.status],
-    });
-
-    // Committer les changements dans la base de données d'événements
-    await this.eventStore.store({
-      aggregateId: fleetId,
-      aggregateType: 'fleet',
-      createdAt: new Date(),
-      eventType: 'fleet-trip-started',
-      payload: {
-        fleetId,
-      },
-    });
-
-    // Envoyer un événement pour informer les utilisateurs
-    this.eventGateway.broadcastToFleet(fleetId, {
-      type: 'fleet-trip-started',
-      payload: {
-        fleetId,
-      },
-    });
-
-    // Envoer une notification à tous les membres du Fleet
-    if (fleet.members) {
-      const notificationTokens: string[] = [];
-      for (const member of fleet.members) {
-        if (member.notificationToken) {
-          notificationTokens.push(member.notificationToken);
-        }
+      // Check if the trip has already started
+      if (fleet.hasTripStarted()) {
+        this.logger.warn(`Trip already started for fleet ID: ${fleetId}`);
+        throw new FleetTripAlreadyStartedError();
       }
-      this.notificationsService.sendNotification({
-        token: notificationTokens,
-        title: fleet.name,
-        message: 'Le trajet a commencé !',
-        data: {
-          type: 'fleet-trip-started',
+
+      // Kick absent members
+      this.logger.verbose(`Kicking absent members from fleet ID: ${fleetId}`);
+      await this.kickAbsentMembers(fleet);
+
+      // Check if there are enough members in the fleet
+      if (fleet.members && fleet.members.length === 1) {
+        this.logger.warn(
+          `Not enough members in fleet ID: ${fleetId}, canceling fleet.`,
+        );
+        await this.cancelFleet(fleetId);
+        throw new NotEnoughMembersInFleetError();
+      }
+
+      // Start the trip
+      this.logger.verbose(`Starting trip for fleet ID: ${fleetId}`);
+      fleet.startTrip();
+
+      // Update fleet status in the database
+      this.logger.verbose(
+        `Updating fleet status in database for fleet ID: ${fleetId}`,
+      );
+      await this.fleetsRepository.update(fleetId, {
+        status: FleetStatusToDatabase[fleet.status],
+      });
+      this.logger.log(
+        `Fleet status updated successfully for fleet ID: ${fleetId}`,
+      );
+
+      // Store trip-start event in the event store
+      this.logger.verbose(`Storing trip-start event for fleet ID: ${fleetId}`);
+      await this.eventStore.store({
+        aggregateId: fleetId,
+        aggregateType: 'fleet',
+        createdAt: new Date(),
+        eventType: 'fleet-trip-started',
+        payload: {
           fleetId,
         },
       });
-    }
+      this.logger.debug('Fleet trip-start event stored successfully.');
 
-    // Supprimer la tâche planifiée pour le départ
-    await this.taskScheduler.deleteScheduledTask({
-      type: 'start-trip',
-      fleetId,
-    });
+      // Broadcast trip-start event to fleet members
+      this.logger.verbose(
+        `Broadcasting trip-start event to fleet ID: ${fleetId}`,
+      );
+      this.eventGateway.broadcastToFleet(fleetId, {
+        type: 'fleet-trip-started',
+        payload: {
+          fleetId,
+        },
+      });
+      this.logger.log(
+        `Fleet trip-start event broadcasted successfully for fleet ID: ${fleetId}`,
+      );
+
+      // Send notifications to fleet members
+      if (fleet.members) {
+        this.logger.verbose('Sending notifications to fleet members...');
+        const notificationTokens: string[] = [];
+        for (const member of fleet.members) {
+          if (member.notificationToken) {
+            notificationTokens.push(member.notificationToken);
+          }
+        }
+        if (notificationTokens.length > 0) {
+          this.notificationsService.sendNotification({
+            token: notificationTokens,
+            title: fleet.name,
+            message: 'Le trajet a commencé !',
+            data: {
+              type: 'fleet-trip-started',
+              fleetId,
+            },
+          });
+          this.logger.log(
+            `Notifications sent to ${notificationTokens.length} members of fleet ID: ${fleetId}`,
+          );
+        } else {
+          this.logger.warn(
+            `No notification tokens found for fleet ID: ${fleetId}`,
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to start trip for fleet ID: ${fleetId}`,
+        error.stack,
+      );
+      throw error;
+    }
   }
 
   private async cancelFleet(fleetId: Id) {
-    const fleet = await this.fleetsRepository.findById({
-      fleetId,
-    });
-    await this.fleetsRepository.update(fleetId, {
-      status: FleetStatusToDatabase[fleet.status],
-    });
-    await this.eventStore.store({
-      aggregateId: fleetId,
-      aggregateType: 'fleet',
-      createdAt: new Date(),
-      eventType: 'fleet-canceled',
-      payload: {
-        fleetId,
-      },
-    });
-    this.eventGateway.broadcastToFleet(fleetId, {
-      type: 'fleet-canceled',
-      payload: {
-        fleetId,
-      },
-    });
+    this.logger.log(`Canceling fleet with ID: ${fleetId}`);
+
+    try {
+      const fleet = await this.fleetsRepository.findById({ fleetId });
+      fleet.status = FleetStatus.CANCELLED;
+      this.logger.debug(
+        `Fetched fleet for cancellation: ${JSON.stringify(fleet)}`,
+      );
+
+      await this.fleetsRepository.update(fleetId, {
+        status: FleetStatusToDatabase[fleet.status],
+      });
+      this.logger.log(
+        `Fleet status updated to 'canceled' for fleet ID: ${fleetId}`,
+      );
+
+      await this.eventStore.store({
+        aggregateId: fleetId,
+        aggregateType: 'fleet',
+        createdAt: new Date(),
+        eventType: 'fleet-canceled',
+        payload: { fleetId },
+      });
+      this.logger.log(`Fleet-canceled event stored for fleet ID: ${fleetId}`);
+
+      this.eventGateway.broadcastToFleet(fleetId, {
+        type: 'fleet-canceled',
+        payload: { fleetId },
+      });
+      this.logger.log(`Broadcast fleet-canceled event to fleet ID: ${fleetId}`);
+
+      await this.taskScheduler.unScheduleTasks(fleetId);
+      this.logger.log(`Unscheduled all tasks for fleet ID: ${fleetId}`);
+    } catch (error) {
+      this.logger.error(`Failed to cancel fleet ID: ${fleetId}`, error.stack);
+      throw error;
+    }
   }
 
   private async kickAbsentMembers(fleet: Fleet) {
+    this.logger.log(`Kicking absent members from fleet ID: ${fleet.id}`);
+
     const members = fleet.members;
     if (!members) {
+      this.logger.error('Fleet members not loaded');
       throw new Error('Fleet members not loaded');
     }
+
     return Promise.all(
       members.map((member) => {
         if (!member.hasConfirmedHisPresence) {
+          this.logger.log(
+            `Kicking absent member with ID: ${member.id} from fleet ID: ${fleet.id}`,
+          );
           return this.removeFleetMember({
             fleetId: member.fleetId,
             administratorId: fleet.administratorId,
@@ -340,71 +530,108 @@ export class FleetsManager {
   }
 
   async getFleet(options: GetFleetOptions) {
+    this.logger.log(`Fetching fleet with options: ${JSON.stringify(options)}`);
     options = getFleetOptionsSchema.parse(options);
     let userId: Id | undefined;
     let includeEndedFleets = true;
+
     if (options.userId) {
       userId = options.userId;
       includeEndedFleets = false;
     }
-    const fleet = await this.fleetsRepository.findById(
-      {
-        fleetId: options.fleetId,
-        memberId: userId,
-        includeEnded: includeEndedFleets,
-      },
-      {
-        memberships: {
-          include: {
-            user: true,
-          },
+
+    try {
+      const fleet = await this.fleetsRepository.findById(
+        {
+          fleetId: options.fleetId,
+          memberId: userId,
+          includeEnded: includeEndedFleets,
         },
-        startStation: true,
-        endStation: true,
-      },
-    );
-    if (!fleet) {
-      return null;
+        {
+          memberships: { include: { user: true } },
+          startStation: true,
+          endStation: true,
+        },
+      );
+
+      if (!fleet) {
+        this.logger.warn(`No fleet found`);
+        return null;
+      }
+
+      this.logger.log(`Successfully fetched fleet for fleet ID: ${fleet.id}`);
+      return fleet;
+    } catch (error) {
+      this.logger.error(
+        `Failed to fetch fleet with options: ${JSON.stringify(options)}`,
+        error.stack,
+      );
+      throw error;
     }
-    return fleet;
   }
 
   async searchFleets(options: SearchFleetsOptions) {
+    this.logger.log(
+      `Searching fleets with options: ${JSON.stringify(options)}`,
+    );
+
     const fleetsDelays = await this.getFleetsDelays();
     const validationSchema = getSearchFleetsOptionsSchema({
       minFormationDelay: fleetsDelays.MIN_FORMATION_DELAY,
     });
     options = validationSchema.parse(options);
-    const searcher = await this.usersRepository.getUserById({
-      id: options.searcherId,
-      includePending: false,
-    });
-    const genderConstraints = [GenderConstraintEnum.NO_CONSTRAINT];
-    switch (searcher.gender) {
-      case GenderEnum.MALE:
-        genderConstraints.push(GenderConstraintEnum.MALE_ONLY);
-        break;
-      case GenderEnum.FEMALE:
-        genderConstraints.push(GenderConstraintEnum.FEMALE_ONLY);
-        break;
+
+    try {
+      const searcher = await this.usersRepository.getUserById({
+        id: options.searcherId,
+        includePending: false,
+      });
+      this.logger.debug(`Searcher details: ${JSON.stringify(searcher)}`);
+
+      const genderConstraints = [GenderConstraintEnum.NO_CONSTRAINT];
+      switch (searcher.gender) {
+        case GenderEnum.MALE:
+          genderConstraints.push(GenderConstraintEnum.MALE_ONLY);
+          break;
+        case GenderEnum.FEMALE:
+          genderConstraints.push(GenderConstraintEnum.FEMALE_ONLY);
+          break;
+      }
+
+      const departureTime = new Date(options.departureTime);
+      let network: UserNetwork | undefined;
+      if (searcher.network) {
+        network = searcher.network;
+      }
+
+      const fleets = await this.fleetsRepository.findAll({
+        startStationId: options.startStationId,
+        endStationId: options.endStationId,
+        departureTime,
+        genderConstraints,
+        status: FleetStatus.FORMATION,
+        network,
+      });
+
+      this.logger.log(
+        `Found ${fleets.length} fleets matching search criteria.`,
+      );
+      return fleets;
+    } catch (error) {
+      this.logger.error(
+        `Failed to search fleets with options: ${JSON.stringify(options)}`,
+        error.stack,
+      );
+      throw error;
     }
-    const departureTime = new Date(options.departureTime);
-    let network: UserNetwork | undefined;
-    if (searcher.network) {
-      network = searcher.network;
-    }
-    return this.fleetsRepository.findAll({
-      startStationId: options.startStationId,
-      endStationId: options.endStationId,
-      departureTime,
-      genderConstraints,
-      status: FleetStatus.FORMATION,
-      network,
-    });
   }
 
   async requestToJoinFleet(options: CreateJoinRequestOptions) {
+    this.logger.debug(
+      `Received request to join fleet with options: ${JSON.stringify(options)}`,
+    );
     options = createJoinRequestOptionsSchema.parse(options);
+
     const joinRequest = new JoinRequest();
     joinRequest.create(options);
     const fleet = await this.fleetsRepository.findById(
@@ -421,20 +648,31 @@ export class FleetsManager {
         },
       },
     );
-    // Une transaction sert à s'assurer que toutes les opérations sont effectuées
-    // ou aucune. Si une opération échoue, toutes les opérations sont annulées.
-    // https://www.prisma.io/docs/concepts/components/prisma-client/transactions
-    // Par exemple, si entre temps, un autre utilisateur a rejoint le Fleet,
-    // et que le Fleet est plein, la transaction échouera et l'erreur sera catchée.
+
+    if (!fleet) {
+      this.logger.error(
+        `Fleet with ID ${options.fleetId} not found or in invalid state.`,
+      );
+      throw new Error('Fleet not found or not in FORMATION state');
+    }
+
     await this.unitOfWork.withTransaction(async (fleetsRepository) => {
-      // 1. Check if user already has a fleet
+      this.logger.debug(
+        `Transaction started for user ${options.userId} to join fleet ${options.fleetId}`,
+      );
+
       if (!fleet.members) {
+        this.logger.error('Fleet members not loaded');
         throw new Error('Fleet members not loaded');
       }
+
       const userInFleet = fleet.members.some(
         (member) => member.id === options.userId,
       );
       if (userInFleet) {
+        this.logger.warn(
+          `User ${options.userId} already part of fleet ${options.fleetId}`,
+        );
         throw new UserAlreadyHasAFleetError();
       }
 
@@ -442,64 +680,83 @@ export class FleetsManager {
         id: options.userId,
         includePending: false,
       });
-      // 2. Check if user meets gender requirements
       if (!isUserMeetingConstraints(fleet.genderConstraint, user.gender)) {
+        this.logger.warn(
+          `User ${options.userId} does not meet gender constraints for fleet ${options.fleetId}`,
+        );
         throw new UserNotMeetingConstraintsError();
       }
-      // 3. Check if fleet is full
+
       if (fleet.members.length >= MAX_FLEET_MEMBERS) {
+        this.logger.warn(`Fleet ${options.fleetId} is full`);
         throw new FleetIsFullError();
       }
+
       try {
         await fleetsRepository.persistJoinRequest(joinRequest);
+        this.logger.log(
+          `Join request created for user ${options.userId} to join fleet ${options.fleetId}`,
+        );
       } catch (error) {
         if (error.code === 'P2002') {
+          this.logger.error(
+            `User ${options.userId} has already requested to join fleet ${options.fleetId}`,
+          );
           throw new UserAlreadyRequestedToJoinFleetError();
         }
         throw error;
       }
     });
+
     await this.eventStore.store({
       aggregateId: joinRequest.id,
       aggregateType: 'join-request',
       createdAt: new Date(),
       eventType: 'join-request-created',
-      payload: {
-        joinRequestId: joinRequest.id,
-      },
+      payload: { joinRequestId: joinRequest.id },
     });
+
     this.eventGateway.broadcastToUser(fleet.administratorId, {
       type: 'join-request-received',
-      payload: {
-        userId: options.userId,
-      },
+      payload: { userId: options.userId },
     });
+
     if (fleet.administrator?.notificationToken) {
       this.notificationsService.sendNotification({
         token: fleet.administrator.notificationToken,
         title: fleet.name,
-        message: `Un utilisateur a demandé à rejoindre votre Fleet !`,
-        data: {
-          type: 'join-request-received',
-          userId: options.userId,
-        },
+        message: 'Un utilisateur a demandé à rejoindre votre Fleet !',
+        data: { type: 'join-request-received', userId: options.userId },
       });
     }
+
+    this.logger.debug(
+      `Join request process completed for user ${options.userId} and fleet ${options.fleetId}`,
+    );
     return joinRequest;
   }
 
   async respondToFleetRequest(options: RespondToRequestOptions) {
+    this.logger.debug(
+      `Received response to fleet join request with options: ${JSON.stringify(options)}`,
+    );
     options = respondToRequestOptionsSchema.parse(options);
+
     await this.unitOfWork.withTransaction(async (fleetsRepository) => {
       const joinRequest = await fleetsRepository.findJoinRequest({
         fleetId: options.fleetId,
         userId: options.userId,
         administratorId: options.administratorId,
       });
+
       if (joinRequest.status !== JoinRequestStatus.PENDING) {
+        this.logger.warn(
+          `Join request for user ${options.userId} already handled`,
+        );
         throw new JoinRequestAlreadyHandledError();
       }
-      if (options.accepted === false) {
+
+      if (!options.accepted) {
         joinRequest.reject();
         await fleetsRepository.updateJoinRequestStatus({
           findOptions: {
@@ -514,76 +771,46 @@ export class FleetsManager {
           aggregateType: 'join-request',
           createdAt: new Date(),
           eventType: 'join-request-refused',
-          payload: {
-            joinRequestId: joinRequest.id,
-          },
+          payload: { joinRequestId: joinRequest.id },
         });
+
+        this.eventGateway.broadcastToUser(options.userId, {
+          type: 'join-request-refused',
+          payload: { fleetId: options.fleetId },
+        });
+
+        this.logger.log(
+          `Join request rejected for user ${options.userId} and fleet ${options.fleetId}`,
+        );
         return joinRequest;
       }
+
       const [fleet, user] = await Promise.all([
         fleetsRepository.findById(
-          {
-            fleetId: options.fleetId,
-            status: FleetStatus.FORMATION,
-          },
-          {
-            memberships: {
-              include: {
-                user: true,
-              },
-            },
-          },
+          { fleetId: options.fleetId, status: FleetStatus.FORMATION },
+          { memberships: { include: { user: true } } },
         ) as Promise<Fleet>,
         this.usersRepository.getUserById({
           id: options.userId,
           includePending: false,
         }),
       ]);
+
       if (user.fleetId) {
-        joinRequest.reject();
-        await fleetsRepository.updateJoinRequestStatus({
-          findOptions: {
-            fleetId: options.fleetId,
-            userId: options.userId,
-            administratorId: options.administratorId,
-          },
-          status: JoinRequestStatus.REJECTED,
-        });
-        await this.eventStore.store({
-          aggregateId: joinRequest.id,
-          aggregateType: 'join-request',
-          createdAt: new Date(),
-          eventType: 'join-request-refused',
-          payload: {
-            joinRequestId: joinRequest.id,
-          },
-        });
+        this.logger.warn(`User ${options.userId} already has a fleet`);
         throw new UserAlreadyHasAFleetError();
       }
+
       if (!fleet.members) {
+        this.logger.error('Fleet members not loaded');
         throw new Error('Fleet members not loaded');
       }
+
       if (fleet.members.length >= MAX_FLEET_MEMBERS) {
-        joinRequest.reject();
-        await fleetsRepository.updateJoinRequestStatus({
-          findOptions: {
-            fleetId: options.fleetId,
-            userId: options.userId,
-            administratorId: options.administratorId,
-          },
-          status: JoinRequestStatus.REJECTED,
-        });
-        await this.eventStore.store({
-          aggregateId: joinRequest.id,
-          aggregateType: 'join-request',
-          createdAt: new Date(),
-          eventType: 'join-request-refused',
-          payload: {
-            joinRequestId: joinRequest.id,
-          },
-        });
+        this.logger.warn(`Fleet ${options.fleetId} is full`);
         throw new FleetIsFullError();
       }
+
       joinRequest.accept();
       await fleetsRepository.updateJoinRequestStatus({
         findOptions: {
@@ -607,78 +834,39 @@ export class FleetsManager {
         aggregateType: 'join-request',
         createdAt: new Date(),
         eventType: 'join-request-accepted',
-        payload: {
-          joinRequestId: joinRequest.id,
-        },
+        payload: { joinRequestId: joinRequest.id },
       });
-      if (options.accepted === true) {
-        const notificationTokens: string[] = [];
-        if (fleet.members) {
-          for (const member of fleet.members) {
-            if (member.notificationToken) {
-              notificationTokens.push(member.notificationToken);
-            }
-          }
-        }
-        this.eventGateway.broadcastToUser(user.id, {
-          type: 'join-request-accepted',
-          payload: {
-            fleetId: options.fleetId,
-          },
-        });
-        this.eventGateway.broadcastToFleet(options.fleetId, {
-          type: 'user-joined-fleet',
-          payload: {
-            userId: user.id,
-          },
-        });
-        this.notificationsService.sendNotification({
-          token: notificationTokens,
-          title: fleet.name,
-          message: 'Un utilisateur a rejoint le Fleet !',
-          data: {
-            type: 'user-joined-fleet',
-            userId: user.id,
-          },
-        });
-        this.eventGateway.joinFleetRoom(options.fleetId, user.id);
-        if (user.notificationToken) {
-          this.notificationsService.sendNotification({
-            token: user.notificationToken,
-            title: fleet.name,
-            message: `Vous avez été accepté dans un Fleet !`,
-            data: {
-              type: 'join-request-accepted',
-              fleetId: options.fleetId,
-            },
-          });
-        }
-      } else {
-        this.eventGateway.broadcastToUser(user.id, {
-          type: 'join-request-rejected',
-          payload: {
-            fleetId: options.fleetId,
-          },
-        });
-        if (user.notificationToken) {
-          this.notificationsService.sendNotification({
-            token: user.notificationToken,
-            title: fleet.name,
-            message: `Votre demande a été refusée`,
-            data: {
-              type: 'join-request-rejected',
-              fleetId: options.fleetId,
-            },
-          });
-        }
-      }
+
+      this.eventGateway.broadcastToUser(options.userId, {
+        type: 'join-request-accepted',
+        payload: { fleetId: options.fleetId },
+      });
+
+      this.logger.log(
+        `Join request accepted for user ${options.userId} and fleet ${options.fleetId}`,
+      );
     });
   }
+
   async scheduleDepartureTask(fleetId: Id, departureTime: Date) {
-    return this.taskScheduler.scheduleDeparture(fleetId, departureTime);
+    const taskId = `departure-${fleetId}`;
+    return this.taskScheduler.scheduleTask({
+      taskId,
+      task: async () => {
+        await this.startFleetTrip(fleetId);
+      },
+      time: departureTime,
+    });
   }
   async scheduleGatheringTask(fleetId: Id, gatheringTime: Date) {
-    return this.taskScheduler.scheduleGathering(fleetId, gatheringTime);
+    const taskId = `gathering-${fleetId}`;
+    return this.taskScheduler.scheduleTask({
+      taskId,
+      task: async () => {
+        await this.startFleetGathering(fleetId);
+      },
+      time: gatheringTime,
+    });
   }
 
   async listJoinRequests(options: ListJoinRequestOptions) {

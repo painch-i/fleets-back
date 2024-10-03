@@ -8,7 +8,7 @@ import { PrismaService } from '../infrastructure/persistence/read-database/prism
 import { FleetsRepository } from '../infrastructure/repositories/fleets.repository';
 import { FleetsUnitOfWork } from '../infrastructure/repositories/fleets.unit-of-work';
 import { UsersRepository } from '../infrastructure/repositories/users.repository';
-import { EventBridgeTaskScheduler } from '../infrastructure/scheduler/event-bridge-task-scheduler.service';
+import { LocalTaskSchedulerService } from '../infrastructure/scheduler/local-task-scheduler.service';
 import { EventGateway } from '../presenter/event/event.gateway';
 import {
   FleetsController,
@@ -27,9 +27,9 @@ import { NavigationModule } from './navigation.module';
     UsersRepository,
     FleetsUnitOfWork,
     EventGateway,
-    EventBridgeTaskScheduler,
     EventStore,
     FirebaseService,
+    LocalTaskSchedulerService,
   ],
   exports: [FleetsManager],
 })

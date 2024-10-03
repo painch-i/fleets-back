@@ -4,7 +4,6 @@ import { FeatureFlagsModule } from './infrastructure/feature-flags/feature-flags
 import { ChatModule } from './modules/chat.module';
 import { FleetsModule } from './modules/fleets.module';
 import { NavigationModule } from './modules/navigation.module';
-import { SchedulerModule } from './modules/scheduler.module';
 import { StaticModule } from './modules/static.module';
 import { UsersModule } from './modules/users.module';
 
@@ -16,7 +15,6 @@ import { UsersModule } from './modules/users.module';
     NavigationModule,
     ChatModule,
     ConfigModule,
-    SchedulerModule,
     FeatureFlagsModule,
   ],
   controllers: [],

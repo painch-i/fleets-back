@@ -1,13 +1,27 @@
-import { FleetId } from '../entities/fleet.entity';
+export type Task = () => void;
+export type TaskId = string;
 
-type TaskType = 'start-gathering' | 'start-trip';
-
-export type Task = {
-  type: TaskType;
-  fleetId: FleetId;
+export type ScheduleTaskOptions = {
+  taskId?: TaskId;
+  task: Task;
+  time: Date;
 };
 export interface ITaskScheduler {
-  scheduleGathering(fleetId: FleetId, gatheringTime: Date): Promise<void>;
-  scheduleDeparture(fleetId: FleetId, departureTime: Date): Promise<void>;
-  deleteScheduledTask(task: Task): Promise<void>;
+  /**
+   * Schedule a task
+   * @param options The task to schedule
+   */
+  scheduleTask(options: ScheduleTaskOptions): Promise<void>;
+
+  /**
+   * Unschedule a task
+   * @param taskId The task to unschedule
+   */
+  unScheduleTask(taskId: TaskId): Promise<void>;
+
+  /**
+   * Unschedule all tasks containing this string in their taskId
+   * @param taskId The string to search for in the taskId
+   */
+  unScheduleTasks(taskId: string): Promise<void>;
 }
