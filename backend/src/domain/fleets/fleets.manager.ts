@@ -829,6 +829,7 @@ export class FleetsManager {
         fleetId: options.fleetId,
         userIds: [options.userId],
       });
+
       await this.eventStore.store({
         aggregateId: joinRequest.id,
         aggregateType: 'join-request',
@@ -841,6 +842,11 @@ export class FleetsManager {
         type: 'join-request-accepted',
         payload: { fleetId: options.fleetId },
       });
+      this.eventGateway.broadcastToFleet(options.fleetId, {
+        type: 'member-joined',
+        payload: { fleetId: options.fleetId, userId: options.userId },
+      });
+      this.eventGateway.joinFleetRoom(options.fleetId, options.userId);
 
       this.logger.log(
         `Join request accepted for user ${options.userId} and fleet ${options.fleetId}`,
@@ -1024,11 +1030,16 @@ export class FleetsManager {
       status,
     });
 
-    // Committer les changements dans la base de données d'événements
-    // fleet.commit();
-
-    // Faire quitter la room du Fleet
-    this.eventGateway.leaveFleetRoom(fleetId, memberId);
+    await this.eventStore.store({
+      aggregateId: fleetId,
+      aggregateType: 'fleet',
+      createdAt: new Date(),
+      eventType: 'member-removed',
+      payload: {
+        fleetId,
+        memberId,
+      },
+    });
 
     // Envoyer un événement pour informer les utilisateurs
     this.eventGateway.broadcastToFleet(fleetId, {
@@ -1038,6 +1049,9 @@ export class FleetsManager {
         memberId,
       },
     });
+
+    // Faire quitter la room du Fleet
+    this.eventGateway.leaveFleetRoom(fleetId, memberId);
   }
 
   private async getFleetsDelays() {
