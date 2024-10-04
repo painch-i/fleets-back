@@ -377,7 +377,7 @@ export class FleetsManager {
       await this.kickAbsentMembers(fleet);
 
       // Check if there are enough members in the fleet
-      if (fleet.members && fleet.members.length === 1) {
+      if (fleet.members && fleet.members.length < 2) {
         this.logger.warn(
           `Not enough members in fleet ID: ${fleetId}, canceling fleet.`,
         );

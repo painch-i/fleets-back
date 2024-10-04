@@ -36,6 +36,20 @@ export class FirebaseService implements INotificationsService {
         body: options.message,
       },
       data: options.data,
+      android: {
+        priority: 'high',
+        notification: {
+          sound: 'default',
+        },
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            contentAvailable: false,
+          },
+        },
+      },
     });
   }
 }

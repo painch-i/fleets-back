@@ -397,7 +397,9 @@ export class FleetsRepository implements IFleetsRepository {
   }
 
   async removeFleetMember(options: FindByMemberAndAdminOptions) {
-    const fleetWhere: Prisma.FleetWhereInput = {};
+    const fleetWhere: Prisma.FleetWhereInput = {
+      id: options.fleetId,
+    };
     if (options.status) {
       fleetWhere.status = FleetStatusToDatabase[options.status];
     }
