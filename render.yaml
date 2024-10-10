@@ -15,7 +15,6 @@ services:
   buildCommand: pnpm install && pnpm build && pnpm migration:run
   startCommand: pnpm start
   domains:
-  - api.fleets-app.fr
   - api.fleets-app.com
   rootDir: backend
 version: "1"
