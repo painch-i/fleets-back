@@ -124,6 +124,13 @@ export class EventGateway implements IEventGateway, OnGatewayConnection {
       user = await this.usersRepository.getUserById({
         id: tokenPayload.id,
         includePending: true,
+        include: {
+          memberships: {
+            include: {
+              fleet: true,
+            },
+          },
+        },
       });
       this.logger.debug(`User fetched: ${JSON.stringify(user)}`);
     } catch (error) {
@@ -135,7 +142,14 @@ export class EventGateway implements IEventGateway, OnGatewayConnection {
     if (user) {
       this.logger.log(`User ${user.id} authenticated, joining rooms`);
       socket.join(`user:${user.id}`);
-
+      if ('fleets' in user) {
+        for (const fleet of user.fleets) {
+          this.logger.log(
+            `User ${user.id} joining fleet room: fleet:${fleet.id}`,
+          );
+          socket.join(`fleet:${fleet.id}`);
+        }
+      }
       if ('fleetId' in user && user.fleetId !== null) {
         this.logger.log(
           `User ${user.id} joining fleet room: fleet:${user.fleetId}`,

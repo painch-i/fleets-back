@@ -1,5 +1,9 @@
 import { assertIsNotNull } from '../../../utils';
 import { Fleet, FleetId } from '../../fleets/entities/fleet.entity';
+import {
+  FleetStatus,
+  FleetStatusFromDatabase,
+} from '../../fleets/fleets.types';
 import { BaseUser } from './base-user.entity';
 import {
   CompleteRegistrationOptions,
@@ -22,6 +26,7 @@ export class User extends BaseUser {
   declare gender: GenderEnum;
   fleetId: FleetId | null = null;
   fleet?: Fleet;
+  fleets: Fleet[] = [];
   declare isOnboarded: true;
   declare network: UserNetwork | null;
   declare notificationToken: string | null;
@@ -40,11 +45,23 @@ export class User extends BaseUser {
     user.lastName = userFromDb.lastName;
     user.birthDate = new Date(userFromDb.birthDate);
     user.gender = GenderEnumFromDatabase[userFromDb.gender];
+    user.fleets = [];
     if (userFromDb.memberships && userFromDb.memberships.length > 0) {
-      const membership = userFromDb.memberships[0];
-      user.fleetId = membership.fleetId;
-      if (membership.fleet) {
-        user.fleet = Fleet.fromDatabase(membership.fleet);
+      for (const membership of userFromDb.memberships) {
+        if (!membership.fleet) {
+          continue;
+        }
+        const fleet = Fleet.fromDatabase(membership.fleet);
+        if (
+          [FleetStatus.ARRIVED, FleetStatus.CANCELLED].includes(
+            FleetStatusFromDatabase[membership.fleet.status],
+          )
+        ) {
+          user.fleet = fleet;
+          user.fleetId = fleet.id;
+        } else {
+          user.fleets.push(fleet);
+        }
       }
     }
     user.network = userFromDb.network

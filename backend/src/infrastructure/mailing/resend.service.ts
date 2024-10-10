@@ -26,7 +26,7 @@ export class ResendService implements IMailsService {
     const html = render(VerifyOtpEmail(options.otp));
 
     const resendOptions = {
-      from: "L'Équipe Fleets <team@fleets-app.fr>",
+      from: "L'Équipe Fleets <team@fleets-app.com>",
       to: options.to,
       subject: `🔐 Code de vérification`,
       html,

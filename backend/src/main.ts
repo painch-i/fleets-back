@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import path from 'node:path';
 import * as repl from 'node:repl';
 import { AppModule } from './app.module';
 import { ConfigService, FleetsEnvironmentEnum } from './config/config.service';
@@ -24,8 +25,12 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const fleetsEnv = configService.get('FLEETS_ENV');
   if (fleetsEnv === FleetsEnvironmentEnum.DEVELOPMENT) {
+    const historyFile = path.resolve(__dirname, '.repl_history');
     const replServer = repl.start({
       prompt: 'fleets> ',
+    });
+    replServer.setupHistory(historyFile, (err) => {
+      if (err) console.error(err);
     });
     Object.assign(replServer.context, getAllProviders(AppModule));
     Object.assign(replServer.context, { $: app.get });
