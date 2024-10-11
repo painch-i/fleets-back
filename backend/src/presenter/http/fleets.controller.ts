@@ -36,7 +36,6 @@ import { CallerUserId } from '../../infrastructure/authentication/guards/decorat
 import { UserAuthenticated } from '../../infrastructure/authentication/guards/user-authenticated.auth-guard';
 import { StationOrLineNotFoundError } from '../../infrastructure/repositories/fleets.repository';
 import { generateOpenApiSchema } from '../../utils';
-import { RemoveMemberHttpBody } from './http-bodies/fleets/remove-member.http-body';
 import { RespondToRequestHttpBody } from './http-bodies/fleets/respond-to-request.http-body';
 import { SearchFleetsQueryParams } from './http-bodies/fleets/search-fleets.query-params';
 @ApiTags('fleets')
@@ -350,9 +349,8 @@ export class SingleFleetController {
     description: 'The id of the fleet',
   })
   async removeFleetMember(
-    @Param('fleetId') fleetId: string | null,
-    @Body()
-    body: RemoveMemberHttpBody,
+    @Param('fleetId')
+    fleetId: string | null,
     @CallerUserId({
       required: true,
     })
