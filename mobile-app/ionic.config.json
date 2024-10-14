@@ -1,0 +1,7 @@
+{
+  "name": "Fleets",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}

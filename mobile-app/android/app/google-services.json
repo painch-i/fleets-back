@@ -1,0 +1,99 @@
+{
+  "project_info": {
+    "project_number": "818399715145",
+    "firebase_url": "https://fleets-7f5ae-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "fleets-7f5ae",
+    "storage_bucket": "fleets-7f5ae.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:818399715145:android:ea47ccf4f109e12b3cc498",
+        "android_client_info": {
+          "package_name": "com.fleets"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "818399715145-pig35tsjvidosh7al3t0l9d7u9ojdh5h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fleets",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "818399715145-tk2m8nn82h52jeera1pc8cs8bk351aek.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fleets",
+            "certificate_hash": "241feba2216cb24845a9c91798329dbeb5b04329"
+          }
+        },
+        {
+          "client_id": "818399715145-a8g7pspekhfl0kdsto1g10kdp49815ll.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6qPhz2ppKJnwli-hcp2sqMWHC0rF8FgM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "818399715145-a8g7pspekhfl0kdsto1g10kdp49815ll.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "818399715145-iqdk1gpmgoj9n3r5o7qhl7upvlcsl7de.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "org.reactjs.native.example.Fleets"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:818399715145:android:5e0010ff6067a4d23cc498",
+        "android_client_info": {
+          "package_name": "com.fleets.ionic"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "818399715145-a8g7pspekhfl0kdsto1g10kdp49815ll.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6qPhz2ppKJnwli-hcp2sqMWHC0rF8FgM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "818399715145-a8g7pspekhfl0kdsto1g10kdp49815ll.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "818399715145-iqdk1gpmgoj9n3r5o7qhl7upvlcsl7de.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "org.reactjs.native.example.Fleets"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

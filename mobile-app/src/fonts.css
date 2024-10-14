@@ -1,0 +1,44 @@
+/* Anybody fonts */
+
+@font-face {
+  font-family: 'Anybody';
+  src: url('./assets/fonts/anybody/Anybody-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Anybody';
+  src: url('./assets/fonts/anybody/Anybody-BoldItalic.ttf') format('truetype');
+  font-weight: bold;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Anybody';
+  src: url('./assets/fonts/anybody/Anybody-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Anybody';
+  src: url('./assets/fonts/anybody/Anybody-ExtraBoldItalic.ttf')
+    format('truetype');
+  font-weight: 800;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Anybody';
+  src: url('./assets/fonts/anybody/Anybody-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Anybody';
+  src: url('./assets/fonts/anybody/Anybody-BlackItalic.ttf') format('truetype');
+  font-weight: 900;
+  font-style: italic;
+}
