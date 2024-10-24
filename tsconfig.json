@@ -1,0 +1,60 @@
+{
+  "compilerOptions": {
+      "target": "es2017",
+      "useDefineForClassFields": true,
+      "lib": [
+          "DOM",
+          "DOM.Iterable",
+          "ESNext"
+      ],
+      "allowJs": false,
+      "skipLibCheck": true,
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
+      "strict": true,
+      "forceConsistentCasingInFileNames": false,
+      "module": "commonjs",
+      "moduleResolution": "Node",
+      "resolveJsonModule": true,
+      "isolatedModules": true,
+      "noEmit": true,
+      "jsx": "react",
+      "types": [
+          "jest"
+      ],
+      "paths": {
+          "@/*": [
+              "src/*"
+          ],
+          "@cypress/*": [
+              "cypress/*"
+          ]
+      },
+      "declaration": true,
+      "removeComments": true,
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "sourceMap": true,
+      "outDir": "./dist",
+      "incremental": true,
+      "strictNullChecks": true,
+      "noImplicitAny": false,
+      "strictBindCallApply": false,
+      "noFallthroughCasesInSwitch": false
+  },
+  "include": [
+      "src",
+      "emails/**/*.ts",
+      "emails/**/*.tsx"
+  ],
+  "exclude": [
+      "cypress",
+      "cypress.config.ts",
+      "**/*.cy.tsx"
+  ],
+  "references": [
+      {
+          "path": "./mobile-app/tsconfig.node.json"
+      }
+  ]
+}

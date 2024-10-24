@@ -1,8 +1,8 @@
-import { useNavigate } from 'react-router';
 import { DefaultError } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
 
-import AuthLayout from '@/components/Layout/Auth.layout';
 import Input from '@/components/Input/Input.global';
+import AuthLayout from '@/components/Layout/Auth.layout';
 
 import { useStartRegistrationMutation } from '@/features/auth/api/start-registration.mutation';
 import { useForm } from '@/hooks/use-form.hook';
