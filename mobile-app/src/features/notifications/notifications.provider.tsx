@@ -7,6 +7,7 @@ import { getAnalytics } from 'firebase/analytics';
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken } from 'firebase/messaging';
 import React, { useCallback, useEffect } from 'react';
+import { NotificationData } from './notifications.types';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBQa4-Z7aaVh5J7K5_wN5tuwXZZP5enfl0',
@@ -34,12 +35,11 @@ async function addListeners(): Promise<PluginListenerHandle[]> {
     ),
     PushNotifications.addListener(
       'pushNotificationActionPerformed',
-      (notification) => {
-        console.log(
-          'Action effectuée sur la notification push',
-          notification.actionId,
-          notification.inputValue,
-        );
+      (action) => {
+        const notificationData: NotificationData = action.notification.data;
+        switch (notificationData.type) {
+          // Gère les actions en fonction du type de notification
+        }
       },
     ),
   ]);
