@@ -1008,7 +1008,7 @@ export class FleetsManager {
       payload: { fleetId, memberId },
     });
     try {
-      this.notificationsService.sendNotification({
+      await this.notificationsService.sendNotification({
         token: presentMemberTokens,
         title: fleet.name,
         message: 'Un membre a confirmé sa présence au rassemblement !',
