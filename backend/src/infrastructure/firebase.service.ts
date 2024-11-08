@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import {
   INotificationsService,
@@ -25,34 +25,37 @@ const app = admin.initializeApp({
 
 @Injectable()
 export class FirebaseService implements INotificationsService {
+  logger = new Logger(FirebaseService.name);
   constructor() {}
 
   async sendNotification(options: SendNotificationOptions): Promise<void> {
-    if (!options.token || options.token.length === 0) {
-      throw new Error('No token provided');
-    }
-    await app.messaging().sendEachForMulticast({
-      tokens:
-        typeof options.token === 'string' ? [options.token] : options.token,
-      notification: {
-        title: options.title,
-        body: options.message,
-      },
-      data: options.data,
-      android: {
-        priority: 'high',
+    await app
+      .messaging()
+      .sendEachForMulticast({
+        tokens:
+          typeof options.token === 'string' ? [options.token] : options.token,
         notification: {
-          sound: 'default',
+          title: options.title,
+          body: options.message,
         },
-      },
-      apns: {
-        payload: {
-          aps: {
+        data: options.data,
+        android: {
+          priority: 'high',
+          notification: {
             sound: 'default',
-            contentAvailable: false,
           },
         },
-      },
-    });
+        apns: {
+          payload: {
+            aps: {
+              sound: 'default',
+              contentAvailable: false,
+            },
+          },
+        },
+      })
+      .catch((e) => {
+        this.logger.error(e, e.stack);
+      });
   }
 }
