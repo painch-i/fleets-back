@@ -28,6 +28,9 @@ export class FirebaseService implements INotificationsService {
   constructor() {}
 
   async sendNotification(options: SendNotificationOptions): Promise<void> {
+    if (!options.token || options.token.length === 0) {
+      throw new Error('No token provided');
+    }
     await app.messaging().sendEachForMulticast({
       tokens:
         typeof options.token === 'string' ? [options.token] : options.token,
