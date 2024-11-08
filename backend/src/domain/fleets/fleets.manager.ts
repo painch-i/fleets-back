@@ -1007,23 +1007,23 @@ export class FleetsManager {
       type: 'presence-confirmed',
       payload: { fleetId, memberId },
     });
-    try {
-      await this.notificationsService.sendNotification({
-        token: presentMemberTokens,
-        title: fleet.name,
-        message: 'Un membre a confirmé sa présence au rassemblement !',
-        data: {
-          type: 'presence-confirmed',
-          fleetId,
-          memberId,
-        },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to send notification to present members of fleet ${fleetId}`,
-        error.stack,
-      );
-    }
+    // try {
+    //   await this.notificationsService.sendNotification({
+    //     token: presentMemberTokens,
+    //     title: fleet.name,
+    //     message: 'Un membre a confirmé sa présence au rassemblement !',
+    //     data: {
+    //       type: 'presence-confirmed',
+    //       fleetId,
+    //       memberId,
+    //     },
+    //   });
+    // } catch (error) {
+    //   this.logger.error(
+    //     `Failed to send notification to present members of fleet ${fleetId}`,
+    //     error.stack,
+    //   );
+    // }
   }
 
   async removeFleetMember(options: FindByMemberAndAdminOptions) {
