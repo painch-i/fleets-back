@@ -223,7 +223,7 @@ export class FleetsRepository implements IFleetsRepository {
       where = {
         ...where,
         status: {
-          not: FleetStatusToDatabase[FleetStatus.ARRIVED, FleetStatus.CANCELLED],
+          notIn: [FleetStatusToDatabase[FleetStatus.ARRIVED], FleetStatusToDatabase[FleetStatus.CANCELLED]],
         },
       };
     }
