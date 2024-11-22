@@ -9,120 +9,145 @@ datasource db {
 
 // Models
 model Fleet {
-  id            String          @id
-  name          String
-  joinRequests  JoinRequest[]
-  messages      Message[]
-  memberships         UserMembership[]
-  administrator User           @relation(name: "FleetAdministrators", fields: [administratorId], references: [id])
-  administratorId String
-  startStation  Station         @relation(fields: [startStationId], references: [id], name: "StartStation")
-  startStationId String
-  endStation    Station         @relation(fields: [endStationId], references: [id], name: "EndStation")
-  endStationId  String
-  gatheringTime DateTime
-  departureTime DateTime
+  id               String           @id
+  name             String
+  joinRequests     JoinRequest[]
+  messages         Message[]
+  memberships      UserMembership[]
+  administrator    User             @relation(name: "FleetAdministrators", fields: [administratorId], references: [id])
+  administratorId  String
+  startStation     Station          @relation(fields: [startStationId], references: [id], name: "StartStation")
+  startStationId   String
+  endStation       Station          @relation(fields: [endStationId], references: [id], name: "EndStation")
+  endStationId     String
+  gatheringTime    DateTime
+  departureTime    DateTime
   genderConstraint GenderConstraint
-  isJoinable   Boolean
-  status       FleetStatus
-  createdAt    DateTime        @default(now())
-  linesTaken   Json
-  network      UserNetwork?
+  isJoinable       Boolean
+  status           FleetStatus
+  createdAt        DateTime         @default(now())
+  linesTaken       Json
+  network          UserNetwork?
+  issues           Issue[]
 }
 
 model User {
-  id         String  @id
-  email      String @unique
-  firstName  String?
-  lastName   String?
-  birthDate  DateTime?
-  gender Gender?
-  messages   Message[]
-  administratedFleets Fleet[] @relation(name: "FleetAdministrators")
-  memberships      UserMembership[]
-  joinRequests JoinRequest[]
-  isOnboarded Boolean
-  createdAt   DateTime @default(now())
-  network     UserNetwork?
-  notificationToken String?
+  id                         String           @id
+  email                      String           @unique
+  firstName                  String?
+  lastName                   String?
+  birthDate                  DateTime?
+  gender                     Gender?
+  messages                   Message[]
+  administratedFleets        Fleet[]          @relation(name: "FleetAdministrators")
+  memberships                UserMembership[]
+  joinRequests               JoinRequest[]
+  isOnboarded                Boolean
+  createdAt                  DateTime         @default(now())
+  network                    UserNetwork?
+  notificationToken          String?
   notificationTokenUpdatedAt DateTime?
+  reportedIssues             Issue[]          @relation(name: "Reporter")
+  targetIssues               Issue[]          @relation(name: "TargetUser")
 }
 
 model OneTimePassword {
-  email String @id
-  code String
+  email     String   @id
+  code      String
   expiresAt DateTime
   createdAt DateTime @default(now())
+
   @@index([code])
 }
 
 model UserMembership {
   hasConfirmedHisPresence Boolean
-  userId String
-  fleetId String
-  user User @relation(fields: [userId], references: [id])
-  fleet Fleet @relation(fields: [fleetId], references: [id])
-  createdAt DateTime @default(now())
+  userId                  String
+  fleetId                 String
+  user                    User     @relation(fields: [userId], references: [id])
+  fleet                   Fleet    @relation(fields: [fleetId], references: [id])
+  createdAt               DateTime @default(now())
+
   @@id([userId, fleetId])
-	@@map("UserMembership")
+  @@map("UserMembership")
 }
 
 model JoinRequest {
-  id       String
-  status   JoinRequestStatus
-  fleetId String
-  fleet   Fleet @relation(fields: [fleetId], references: [id], onDelete: Cascade)
-  userId  String
-  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id        String
+  status    JoinRequestStatus
+  fleetId   String
+  fleet     Fleet             @relation(fields: [fleetId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime          @default(now())
+
   @@id([fleetId, userId])
 }
 
 model Message {
-  id       String @id
-  fleetId String
-  authorId String
-  content  String
+  id        String   @id
+  fleetId   String
+  authorId  String
+  content   String
   createdAt DateTime @default(now())
-  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  fleet   Fleet @relation(fields: [fleetId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  fleet     Fleet    @relation(fields: [fleetId], references: [id], onDelete: Cascade)
 }
 
 model Line {
-  id   String @id
-  externalId String @unique
-  name String
-  mode TransportMode
-  subMode TransportSubMode?
-  pictoUrl String
-  stations Station[]
-  color String
-  textColor String
+  id         String            @id
+  externalId String            @unique
+  name       String
+  mode       TransportMode
+  subMode    TransportSubMode?
+  pictoUrl   String
+  stations   Station[]
+  color      String
+  textColor  String
 }
 
 model Station {
-  id String @id
-  externalId String @unique
-  name String
-  lines Line[]
+  id                 String  @id
+  externalId         String  @unique
+  name               String
+  lines              Line[]
   fleetsStartingHere Fleet[] @relation(name: "StartStation")
-  fleetsEndingHere Fleet[] @relation(name: "EndStation")
-  longitude Float
-  latitude Float
+  fleetsEndingHere   Fleet[] @relation(name: "EndStation")
+  longitude          Float
+  latitude           Float
 }
 
 model Event {
-  id            Int       @default(autoincrement())
-  createdAt     DateTime  @default(now())
+  id            Int      @default(autoincrement())
+  createdAt     DateTime @default(now())
   eventType     String
   aggregateId   String
   aggregateType String
-  payload        Json
+  payload       Json
 
   @@id([id, createdAt])
   @@index([createdAt])
   @@index([eventType])
   @@index([aggregateId, aggregateType])
+}
+
+model Issue {
+  id            String    @id @default(cuid())
+  type          IssueType
+  description   String
+  reportedBy    String
+  reporter      User      @relation(name: "Reporter", fields: [reportedBy], references: [id], onDelete: Cascade)
+  targetUserId  String? // Nullable : présent uniquement pour les problèmes sur un utilisateur
+  targetUser    User?     @relation(name: "TargetUser", fields: [targetUserId], references: [id], onDelete: Cascade)
+  targetFleetId String? // Nullable : présent uniquement pour les problèmes sur un Fleet
+  targetFleet   Fleet?    @relation(fields: [targetFleetId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+}
+
+enum IssueType {
+  TECHNICAL
+  USER
+  FLEET
 }
 
 // Enums

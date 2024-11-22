@@ -6,8 +6,8 @@ import { ConfigService } from '../config/config.service';
 import { RequiredEnv } from '../config/required-env.decorator';
 import { AuthService } from '../infrastructure/authentication/auth.service';
 import { FeatureFlagsModule } from '../infrastructure/feature-flags/feature-flags.module';
-import { PrismaService } from '../infrastructure/persistence/read-database/prisma/prisma.service';
 import { UsersRepository } from '../infrastructure/repositories/users.repository';
+import { DatabaseModule } from './database.module';
 
 @RequiredEnv({
   key: 'JWT_SECRET',
@@ -28,9 +28,10 @@ import { UsersRepository } from '../infrastructure/repositories/users.repository
       inject: [ConfigService],
     }),
     FeatureFlagsModule,
+    DatabaseModule,
   ],
   controllers: [],
-  providers: [AuthService, UsersRepository, PrismaService, JwtService],
+  providers: [AuthService, UsersRepository, JwtService],
   exports: [AuthService, JwtService],
 })
 export class AuthModule {}
