@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Inject, Post, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -17,7 +17,10 @@ import { generateOpenApiSchema } from '../../utils';
 @UseGuards(UserAuthenticated)
 @ApiTags('issues')
 export class IssuesController {
-  constructor(private readonly issuesManager: IssuesManager) {}
+  constructor(
+    @Inject(IssuesManager)
+    private readonly issuesManager: IssuesManager,
+  ) {}
 
   @Post('create-issue')
   @ApiNoContentResponse({

@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   NotFoundException,
   Param,
   Post,
@@ -27,7 +28,10 @@ import { ZodValidationPipe } from './zod-validation.pipe';
 @UseGuards(UserAuthenticated)
 @ApiTags('chat')
 export class ChatController {
-  constructor(private readonly chatManager: ChatManager) {}
+  constructor(
+    @Inject(ChatManager)
+    private readonly chatManager: ChatManager,
+  ) {}
 
   @Get('get-messages')
   @ApiOkResponse({
