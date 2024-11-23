@@ -1,41 +1,8 @@
-import { TransportMode as DatabaseTransportMode } from '@prisma/client';
-import { z } from 'zod';
-import { ValueObject } from '../_shared/value-object.interface';
+import { $Enums } from '@prisma/client';
+import { TransportModeEnum } from './navigation.types';
 
-export enum TransportModeEnum {
-  BUS = 'bus',
-  RAIL = 'rail',
-  METRO = 'metro',
-  TRAM = 'tram',
-  FUNICULAR = 'funicular',
-}
-
-type TransportModeType = `${TransportModeEnum}`;
-
-const schema = z.nativeEnum(TransportModeEnum);
-
-export class TransportMode extends ValueObject<typeof schema> {
-  constructor(value: TransportModeType) {
-    super(value as TransportModeEnum);
-  }
-  getSchema() {
-    return schema;
-  }
-
-  static getSchema() {
-    return schema;
-  }
-
-  toDatabase(): DatabaseTransportMode {
-    return databaseModeByEnum[this.getValue()];
-  }
-
-  static fromDatabase(databaseTransportMode: DatabaseTransportMode) {
-    return new TransportMode(enumByDatabaseMode[databaseTransportMode]);
-  }
-}
-const databaseModeByEnum: {
-  [key in TransportModeEnum]: DatabaseTransportMode;
+export const transportModeEnumToPrisma: {
+  [key in TransportModeEnum]: $Enums.TransportMode;
 } = {
   [TransportModeEnum.BUS]: 'BUS',
   [TransportModeEnum.RAIL]: 'RAIL',
@@ -44,8 +11,8 @@ const databaseModeByEnum: {
   [TransportModeEnum.FUNICULAR]: 'FUNICULAR',
 };
 
-const enumByDatabaseMode: {
-  [key in DatabaseTransportMode]: TransportModeEnum;
+export const transportModeEnumFromPrisma: {
+  [key in $Enums.TransportMode]: TransportModeEnum;
 } = {
   BUS: TransportModeEnum.BUS,
   RAIL: TransportModeEnum.RAIL,

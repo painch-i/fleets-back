@@ -1,10 +1,20 @@
 import { Id } from '../../types';
 import IEntity from '../_shared/entity.interface';
 import { LineField } from './navigation-csv-provider.interface';
-import { LineWithOptionalRelations } from './navigation.types';
+import {
+  LineWithOptionalRelations,
+  TransportModeEnum,
+  TransportSubModeEnum,
+} from './navigation.types';
 import { Station } from './station.entity';
-import { TransportMode } from './transport-mode.value-object';
-import { TransportSubMode } from './transport-sub-mode.value-object';
+import {
+  transportModeEnumFromPrisma,
+  transportModeEnumToPrisma,
+} from './transport-mode.value-object';
+import {
+  transportSubModeEnumFromPrisma,
+  transportSubModeEnumToPrisma,
+} from './transport-sub-mode.value-object';
 
 export type ExternalLineId = string;
 export type LineId = Id;
@@ -12,8 +22,8 @@ export class Line extends IEntity {
   declare id: LineId;
   externalId: ExternalLineId;
   name: string;
-  mode: TransportMode;
-  subMode: TransportSubMode | null = null;
+  mode: TransportModeEnum;
+  subMode: TransportSubModeEnum | null;
   pictoUrl: string;
   stations?: Station[];
   textColor: string;
@@ -23,11 +33,11 @@ export class Line extends IEntity {
     const line = new Line();
     line.externalId = lineCsv[LineField.ID_Line];
     line.name = lineCsv[LineField.Name_Line];
-    line.mode = new TransportMode(lineCsv[LineField.TransportMode] as any);
+    line.mode = lineCsv[LineField.TransportMode] as TransportModeEnum;
     if (lineCsv[LineField.TransportSubMode]) {
-      line.subMode = new TransportSubMode(
-        lineCsv[LineField.TransportSubMode] as any,
-      );
+      line.subMode = lineCsv[
+        LineField.TransportSubMode
+      ] as TransportSubModeEnum;
     }
     line.pictoUrl = lineCsv[LineField.Picto];
     line.textColor = lineCsv[LineField.TextColourWeb_hexa];
@@ -40,9 +50,9 @@ export class Line extends IEntity {
     const line = new Line(id);
     line.externalId = lineFromDatabase.externalId;
     line.name = lineFromDatabase.name;
-    line.mode = TransportMode.fromDatabase(lineFromDatabase.mode);
+    line.mode = transportModeEnumFromPrisma[lineFromDatabase.mode];
     if (lineFromDatabase.subMode) {
-      line.subMode = TransportSubMode.fromDatabase(lineFromDatabase.subMode);
+      line.subMode = transportSubModeEnumFromPrisma[lineFromDatabase.subMode];
     }
     line.pictoUrl = lineFromDatabase.pictoUrl;
     if (lineFromDatabase.stations) {
@@ -59,13 +69,13 @@ export class Line extends IEntity {
       id: this.id,
       externalId: this.externalId,
       name: this.name,
-      mode: this.mode.toDatabase(),
+      mode: transportModeEnumToPrisma[this.mode],
       pictoUrl: this.pictoUrl,
       color: this.color,
       textColor: this.textColor,
     };
     if (this.subMode !== null) {
-      databaseFormat.subMode = this.subMode.toDatabase();
+      databaseFormat.subMode = transportSubModeEnumToPrisma[this.subMode];
     }
     return databaseFormat;
   }

@@ -34,3 +34,18 @@ export type StationWithOptionalRelations = Omit<
 export type GetSuggestionsBetweenStationsOptions = z.infer<
   typeof getSuggestionsBetweenStationsOptionsSchema
 >;
+
+export enum TransportModeEnum {
+  BUS = 'bus',
+  RAIL = 'rail',
+  METRO = 'metro',
+  TRAM = 'tram',
+  FUNICULAR = 'funicular',
+}
+
+export enum TransportSubModeEnum {
+  REGIONAL_RAIL = 'regionalRail',
+  SUBURBAN_RAILWAY = 'suburbanRailway',
+  LOCAL = 'local',
+  RAIL_SHUTTLE = 'railShuttle',
+}
