@@ -1026,11 +1026,11 @@ export class FleetsManager {
       removeMemberOptionsSchema.parse(options);
     const memberId = removePayload.memberId;
     let administratorId: Id | undefined;
-    if (options.callerId !== memberId) {
-      // Cette condition permet de vérifier si l'appelant est un administrateur qui veut supprimer un membre
-      // ou si c'est le membre lui-même qui veut se retirer du fleet
+    if (removePayload.memberId !== callerId) {
+      // Si ce n'est pas un call pour quitter soi-même, il faut vérifier que l'appelant est un administrateur du fleet
       administratorId = callerId;
     }
+
     await this.fleetsRepository.removeFleetMember({
       fleetId,
       memberId,
