@@ -45,6 +45,7 @@ import {
   GetFleetOptions,
   JoinRequestStatus,
   ListJoinRequestOptions,
+  RemoveMemberOptions,
   RespondToRequestOptions,
   SearchFleetsOptions,
 } from './fleets.types';
@@ -58,6 +59,7 @@ import { findByAdminOptionsSchema } from './validation-schemas/find-by-admin-opt
 import { findByMemberAndAdminOptionsSchema } from './validation-schemas/find-by-member-options.schema';
 import { getFleetOptionsSchema } from './validation-schemas/get-fleet-options.schema';
 import { listJoinRequestOptionsSchema } from './validation-schemas/list-join-request-options.schema';
+import { removeMemberOptionsSchema } from './validation-schemas/remove-member-options.schema';
 import { respondToRequestOptionsSchema } from './validation-schemas/respond-to-request-options.schema';
 import { getSearchFleetsOptionsSchema } from './validation-schemas/search-fleets-options.schema';
 
@@ -1026,15 +1028,20 @@ export class FleetsManager {
     // }
   }
 
-  async removeFleetMember(options: FindByMemberAndAdminOptions) {
-    options = findByMemberAndAdminOptionsSchema.parse(options);
-    const { fleetId, administratorId, memberId, status } = options;
+  async removeFleetMember(options: RemoveMemberOptions) {
+    const { fleetId, callerId, removePayload } =
+      removeMemberOptionsSchema.parse(options);
+    const memberId = removePayload.memberId;
+    let administratorId: Id | undefined;
+    if (removePayload.memberId !== callerId) {
+      // Si ce n'est pas un call pour quitter soi-même, il faut vérifier que l'appelant est un administrateur du fleet
+      administratorId = callerId;
+    }
 
     await this.fleetsRepository.removeFleetMember({
       fleetId,
       memberId,
       administratorId,
-      status,
     });
 
     await this.eventStore.store({

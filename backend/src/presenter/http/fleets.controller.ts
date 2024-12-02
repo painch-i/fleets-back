@@ -31,12 +31,12 @@ import {
 } from '../../domain/fleets/errors/errors';
 import { FleetsManager } from '../../domain/fleets/fleets.manager';
 import { getCreateFleetPayloadSchema } from '../../domain/fleets/validation-schemas/create-fleet-options.schema';
+import { removeMemberPayloadSchema } from '../../domain/fleets/validation-schemas/remove-member-options.schema';
 import { UserId } from '../../domain/users/entities/user.types';
 import { CallerUserId } from '../../infrastructure/authentication/guards/decorators/caller-user-id.param-decorator';
 import { UserAuthenticated } from '../../infrastructure/authentication/guards/user-authenticated.auth-guard';
 import { StationOrLineNotFoundError } from '../../infrastructure/repositories/fleets.repository';
 import { generateOpenApiSchema } from '../../utils';
-import { RemoveMemberHttpBody } from './http-bodies/fleets/remove-member.http-body';
 import { RespondToRequestHttpBody } from './http-bodies/fleets/respond-to-request.http-body';
 import { SearchFleetsQueryParams } from './http-bodies/fleets/search-fleets.query-params';
 @ApiTags('fleets')
@@ -349,23 +349,24 @@ export class SingleFleetController {
     type: String,
     description: 'The id of the fleet',
   })
+  @ApiBody({
+    schema: generateOpenApiSchema(removeMemberPayloadSchema),
+  })
   async removeFleetMember(
-    @Param('fleetId') fleetId: string | null,
-    @Body()
-    body: RemoveMemberHttpBody,
+    @Param('fleetId')
+    fleetId: string | null,
     @CallerUserId({
       required: true,
     })
     userId: UserId,
+    @Body() removePayload: any,
   ) {
-    const { userId: memberId } = body;
-    if (!fleetId || !memberId)
-      throw new BadRequestException('Missing fleetId or memberId');
+    if (!fleetId) throw new BadRequestException('Missing fleetId');
     try {
       return await this.fleetsManager.removeFleetMember({
         fleetId,
-        memberId,
-        administratorId: userId,
+        removePayload,
+        callerId: userId,
       });
     } catch (error) {
       if (error instanceof RepositoryErrors.EntityNotFoundError) {

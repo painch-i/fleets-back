@@ -13,6 +13,7 @@ import { findByMemberAndAdminOptionsSchema } from './validation-schemas/find-by-
 import { getFleetOptionsSchema } from './validation-schemas/get-fleet-options.schema';
 import { lineTakenSchema } from './validation-schemas/line-taken.schema';
 import { listJoinRequestOptionsSchema } from './validation-schemas/list-join-request-options.schema';
+import { removeMemberOptionsSchema } from './validation-schemas/remove-member-options.schema';
 import { respondToRequestOptionsSchema } from './validation-schemas/respond-to-request-options.schema';
 import { getSearchFleetsOptionsSchema } from './validation-schemas/search-fleets-options.schema';
 
@@ -56,6 +57,8 @@ export type FindJoinRequestOptions = {
 export type FindByMemberAndAdminOptions = z.infer<
   typeof findByMemberAndAdminOptionsSchema
 >;
+
+export type RemoveMemberOptions = z.infer<typeof removeMemberOptionsSchema>;
 
 export enum JoinRequestStatus {
   PENDING = 'pending',
