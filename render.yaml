@@ -1,5 +1,4 @@
 services:
-# Back-end
 - type: web
   name: Fleets API
   runtime: node
@@ -17,7 +16,6 @@ services:
   domains:
   - api.fleets-app.com
   rootDir: backend
-# Web app
   - type: static
     name: Fleets Frontend
     repo: https://gitlab.com/fleets-team/back-gpe
