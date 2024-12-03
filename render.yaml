@@ -1,5 +1,5 @@
-# Exported from Render on 2024-10-10T10:32:11Z
 services:
+# Back-end
 - type: web
   name: Fleets API
   runtime: node
@@ -17,4 +17,18 @@ services:
   domains:
   - api.fleets-app.com
   rootDir: backend
+# Web app
+  - type: static
+    name: Fleets Frontend
+    repo: https://gitlab.com/fleets-team/back-gpe
+    branch: main
+    rootDir: mobile-app
+    buildCommand: pnpm install && pnpm build
+    publishDir: mobile-app/build
+    regions:
+      - frankfurt
+    customDomains:
+      - web.fleets-app.com
+    plan: starter
+
 version: "1"
