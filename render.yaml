@@ -1,31 +1,32 @@
 services:
-- type: web
-  name: Fleets API
-  runtime: node
-  repo: https://gitlab.com/fleets-team/back-gpe
-  plan: starter
-  envVars:
-  - key: FLEETS_ENV
-    sync: false
-  - key: DATABASE_URL
-    sync: false
-  - fromGroup: Base Environment
-  region: frankfurt
-  buildCommand: pnpm install && pnpm build && pnpm migration:run
-  startCommand: pnpm start
-  domains:
-  - api.fleets-app.com
-  rootDir: backend
-  - type: static
+  - type: web
+    name: Fleets API
+    runtime: node
+    repo: https://gitlab.com/fleets-team/back-gpe
+    plan: starter
+    envVars:
+    - key: FLEETS_ENV
+      sync: false
+    - key: DATABASE_URL
+      sync: false
+    - fromGroup: Base Environment
+    region: frankfurt
+    buildCommand: pnpm install && pnpm build && pnpm migration:run
+    startCommand: pnpm start
+    domains:
+    - api.fleets-app.com
+    rootDir: backend
+
+  - type: web
+    runtime: static
     name: Fleets Frontend
     repo: https://gitlab.com/fleets-team/back-gpe
     branch: main
     rootDir: mobile-app
     buildCommand: pnpm install && pnpm build
-    publishDir: mobile-app/build
-    regions:
-      - frankfurt
-    customDomains:
+    staticPublishPath: mobile-app/build
+    region: frankfurt
+    domains:
       - web.fleets-app.com
     plan: starter
 
