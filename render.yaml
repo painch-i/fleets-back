@@ -18,13 +18,13 @@ services:
     rootDir: backend
 
   - type: web
-    runtime: static
+    runtime: node
     name: Fleets Frontend
     repo: https://gitlab.com/fleets-team/back-gpe
     branch: main
     rootDir: mobile-app
-    buildCommand: pnpm install && pnpm build
-    staticPublishPath: mobile-app/build
+    buildCommand: pnpm install --filter mobile-app && pnpm build
+    startCommand: pnpm start
     domains:
       - web.fleets-app.com
 
