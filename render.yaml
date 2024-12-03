@@ -23,7 +23,7 @@ services:
     repo: https://gitlab.com/fleets-team/back-gpe
     branch: main
     rootDir: mobile-app
-    buildCommand: npm install -g pnpm && pnpm install && pnpm build
+    buildCommand: pnpm install && pnpm build
     staticPublishPath: mobile-app/build
     domains:
       - web.fleets-app.com
