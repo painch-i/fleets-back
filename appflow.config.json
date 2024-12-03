@@ -1,30 +1,12 @@
 {
-  "name": "Fleets App",
-  "monorepo": {
-    "enabled": true,
-    "appPath": "mobile-app"
-  },
-  "hooks": {
-    "build": {
-      "before": [
-        {
-          "command": "pnpm install",
-          "name": "Install dependencies"
-        },
-        {
-          "command": "pnpm build",
-          "name": "Build the application"
-        }
-      ]
+  "apps": [
+    {
+      "appId": "bb9b8f9a",
+      "root": "mobile-app",
+      "dependencyInstallCommand": "pnpm install",
+      "webBuildCommand": "pnpm run build",
+      "iosPath": "ios",
+      "androidPath": "android"
     }
-  },
-  "integrations": {
-    "capacitor": {
-      "enabled": true,
-      "config": {
-        "webDir": "dist",
-        "platforms": ["android", "ios"]
-      }
-    }
-  }
+  ]
 }
