@@ -27,6 +27,6 @@ services:
     staticPublishPath: mobile-app/build
     domains:
       - web.fleets-app.com
-    plan: starter
+    plan: free
 
 version: "1"
