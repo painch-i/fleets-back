@@ -24,7 +24,7 @@ services:
     branch: main
     rootDir: mobile-app
     buildCommand: pnpm install --filter mobile-app && pnpm build
-    startCommand: pnpm start
+    startCommand: pnpm serve
     domains:
       - web.fleets-app.com
 
