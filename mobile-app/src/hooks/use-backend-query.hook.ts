@@ -16,6 +16,11 @@ export type BackendQueryKey = [
   BackendQueryOptions['params']?,
 ];
 
+export type QueryOptions<T = unknown, TSelect = T> = Omit<
+  UseQueryOptions<T, DefaultError, TSelect>,
+  'queryKey'
+>;
+
 /**
  * A custom hook for fetching data using `useQuery` from `@tanstack/react-query`.
  *
@@ -29,7 +34,7 @@ export type BackendQueryKey = [
  */
 export function useBackendQuery<T = unknown, TSelect = T>(
   options: BackendQueryOptions,
-  queryOptions?: Omit<UseQueryOptions<T, DefaultError, TSelect>, 'queryKey'>,
+  queryOptions?: QueryOptions<T, TSelect>,
 ): UseQueryResult<TSelect, DefaultError> {
   const queryKey: BackendQueryKey = getQueryKey(options);
 

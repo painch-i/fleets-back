@@ -1,5 +1,5 @@
 import { Line } from '@/features/search/types/line.types';
-import { ID } from '@/types';
+import { ID } from '@/types/utils';
 
 export type StationID = ID;
 export type ExternalStationId = string;

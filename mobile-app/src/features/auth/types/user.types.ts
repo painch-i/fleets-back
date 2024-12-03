@@ -2,7 +2,7 @@ import { IconType } from 'react-icons';
 import { FaMars, FaVenus } from 'react-icons/fa';
 
 import { Fleet, FleetID } from '@/features/fleets/types/fleet.types';
-import { ID } from '@/types';
+import { ID } from '@/types/utils';
 
 export type UserId = ID;
 

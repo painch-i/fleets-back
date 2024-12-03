@@ -4,6 +4,7 @@ import { VariantProps, cva } from 'class-variance-authority';
 import { Line } from '@/features/search/types/line.types';
 import { cn } from '@/utils/lib';
 import { LineTaken } from '@/features/search/types/suggestion.types';
+import { stringToHex } from '@/utils/string';
 
 const transportIconContainerVariants = cva(
   'relative flex items-center justify-center bg-[var(--background)] px-1',
@@ -11,7 +12,7 @@ const transportIconContainerVariants = cva(
     variants: {
       variant: {
         rail: 'rounded-[20%]',
-        tram: 'rounded-md',
+        tram: 'rounded-md bg-transparent',
         metro: 'rounded-full',
         bus: 'rounded-md',
       },
@@ -23,7 +24,7 @@ const transportIconContainerVariants = cva(
 );
 
 const transportIconVariants = cva(
-  'flex flex-col items-center justify-center text-center text-[1rem] font-bold text-[var(--text)]', // Using relative font size (1rem)
+  'flex size-full flex-col items-center justify-center text-center text-[1rem] font-bold text-[var(--text)]', // Using relative font size (1rem)
   {
     variants: {
       variant: {
@@ -62,10 +63,8 @@ export const TransportIcon: React.FC<TransportIconOptions> = ({
     <div
       {...props}
       style={{
-        color: line.textColor,
-        backgroundColor: line.color,
-        ['--background' as string]: `#${line.color}`,
-        ['--text' as string]: `#${isTram ? '000000' : line.textColor}`,
+        ['--background' as string]: stringToHex(line.color),
+        ['--text' as string]: stringToHex(isTram ? '000000' : line.textColor),
       }}
       className={cn(
         transportIconContainerVariants({

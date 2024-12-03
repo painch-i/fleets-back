@@ -1,8 +1,8 @@
 import { UseQueryResult } from '@tanstack/react-query';
 
-import { TransportSubMode } from '@/features/search/types/transport.types';
+import { TRANSPORT_SUB_MODE } from '@/features/search/constants/mappings.transport';
 import { Line, LinesByModes } from '@/features/search/types/line.types';
-import { useBackendQuery } from '@/hooks/use-backend-query.hook';
+import { QueryOptions, useBackendQuery } from '@/hooks/use-backend-query.hook';
 
 export const GET_LINES_API_PATH = 'navigation/get-lines';
 
@@ -14,23 +14,20 @@ const linesFormatter = (lines: Line[]) => {
   };
 
   for (let i = 0; i < lines.length; i++) {
-    const { mode, subMode }: Line = lines[i];
+    const line = lines[i];
+    const { mode, subMode } = line;
 
     if (
-      subMode === TransportSubMode.REGIONAL_RAIL ||
-      subMode === TransportSubMode.RAIL_SHUTTLE
+      subMode === TRANSPORT_SUB_MODE.REGIONAL_RAIL ||
+      subMode === TRANSPORT_SUB_MODE.RAIL_SHUTTLE
     ) {
       continue;
     }
 
-    linesByMode[mode].push(lines[i]);
+    linesByMode[mode].push(line);
   }
 
   return linesByMode;
-};
-
-const queryOptions = {
-  select: linesFormatter,
 };
 
 /**
@@ -40,8 +37,10 @@ const queryOptions = {
  *
  * @description The fetched data is transformed and organized by TransportMode before being returned.
  */
-export const useLines = (): UseQueryResult<LinesByModes> =>
+export const useLines = (
+  queryOptions?: QueryOptions<Line[], LinesByModes>,
+): UseQueryResult<LinesByModes> =>
   useBackendQuery<Line[], LinesByModes>(
     { path: GET_LINES_API_PATH },
-    queryOptions,
+    { ...queryOptions, select: linesFormatter },
   );

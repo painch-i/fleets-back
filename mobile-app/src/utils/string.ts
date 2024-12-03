@@ -26,3 +26,11 @@ export function hexToRgb(hex: string): string {
 
   return `rgb(${r}, ${g}, ${b})`;
 }
+
+export function stringToHex(hex: string): string {
+  const hexRegex = /^#[a-fA-F0-9]{6}$/;
+
+  if (hexRegex.test(hex)) return hex;
+
+  return `#${hex}`;
+}

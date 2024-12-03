@@ -3,7 +3,7 @@ import {
   TransportMode,
   TransportSubMode,
 } from '@/features/search/types/transport.types';
-import { ID } from '@/types';
+import { ID } from '@/types/utils';
 
 export type LineID = ID;
 export type ExternalLineId = string;

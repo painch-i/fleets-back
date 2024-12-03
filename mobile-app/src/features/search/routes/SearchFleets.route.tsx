@@ -1,4 +1,5 @@
 import { useCurrentUser } from '@/features/auth/providers/current-user.provider';
+import { TripSelectorModal } from '@/features/search/components/modals/trip-selector';
 import { SearchTripCard } from '@/features/search/components/SearchTrip.card';
 import { getUserDisplayName } from '@/utils/user';
 
@@ -7,7 +8,7 @@ import { IonContent, IonPage } from '@ionic/react';
 
 export const SearchFleets: React.FC = () => {
   const { user } = useCurrentUser();
-  console.log({ user });
+
   const displayName = getUserDisplayName(user);
 
   return (
@@ -23,6 +24,7 @@ export const SearchFleets: React.FC = () => {
           </h5>
           <SearchTripCard />
         </div>
+        <TripSelectorModal />
       </IonContent>
     </IonPage>
   );

@@ -523,8 +523,10 @@ export class FleetsManager {
           );
           return this.removeFleetMember({
             fleetId: member.fleetId,
-            administratorId: fleet.administratorId,
-            memberId: member.id,
+            removePayload: {
+              memberId: member.id,
+            },
+            callerId: fleet.administratorId,
           });
         }
       }),

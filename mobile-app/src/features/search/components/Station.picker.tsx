@@ -1,5 +1,14 @@
-import { useTripSelectionStore } from '@/features/search/stores/trip-selection.store';
+import {
+  LINE_FIELDS_TO_STATION_FIELDS,
+  MODAL_TRIP_SELECTOR_TYPE,
+  SEARCH_MODAL_TYPE,
+} from '@/features/search/constants/mappings';
+import {
+  TripSelectionContextLineFields,
+  useTripSelectionStore,
+} from '@/features/search/stores/trip-selection.store';
 import { Station } from '@/features/search/types/station.types';
+import { useQueryParam } from '@/hooks/use-query-param.hook';
 
 type StationPickerProps = {
   data: Station;
@@ -12,15 +21,22 @@ const StationPicker: React.FC<StationPickerProps> = ({
   index,
   isLastStation,
 }) => {
-  const [startStation, endStation, updateStations] = useTripSelectionStore(
-    (state) => [state.startStation, state.endStation, state.updateStations],
-  );
+  const { value = MODAL_TRIP_SELECTOR_TYPE.START, removeQueryParam } =
+    useQueryParam(SEARCH_MODAL_TYPE.TRIP_SELECTOR);
 
-  const isSelected = startStation?.id === data.id || endStation?.id === data.id;
+  const currentModalValue = value as TripSelectionContextLineFields;
+  const currentStationType = LINE_FIELDS_TO_STATION_FIELDS[currentModalValue];
 
-  const onSelectStation = () => {
-    updateStations(data);
-  };
+  const [station, updateFleet] = useTripSelectionStore((state) => [
+    state[currentStationType],
+    state.updateFleet,
+  ]);
+
+  function onSelectStation() {
+    updateFleet({ [currentStationType]: data });
+
+    removeQueryParam();
+  }
 
   return (
     <div
@@ -29,7 +45,7 @@ const StationPicker: React.FC<StationPickerProps> = ({
       data-cy="station-picker"
     >
       <div
-        aria-selected={isSelected}
+        aria-selected={station?.id === data.id}
         className="invisible absolute inset-x-0 inset-y-0.5 rounded-[10px] bg-secondary/50 aria-selected:visible"
       />
 

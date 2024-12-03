@@ -11,7 +11,7 @@ import {
   LineTaken,
   RouteSuggestion,
 } from '@/features/search/types/suggestion.types';
-import { ID } from '@/types';
+import { ID } from '@/types/utils';
 
 export type FleetID = ID;
 

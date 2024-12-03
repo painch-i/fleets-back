@@ -21,7 +21,7 @@ import { useRouteSuggestionsQuery } from '@/features/search/api/use-route-sugges
 import { useTripSelectionStore } from '@/features/search/stores/trip-selection.store';
 import { RouteSuggestion } from '@/features/search/types/suggestion.types';
 import useFlag from '@/hooks/use-flag.hook';
-import { GlobalModalOptions } from '@/types';
+import { GlobalModalOptions } from '@/types/utils';
 import { formatDateToString } from '@/utils/date';
 import { cn } from '@/utils/lib';
 import { getUserDisplayName } from '@/utils/user';

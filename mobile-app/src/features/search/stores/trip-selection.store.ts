@@ -1,13 +1,26 @@
 import { create } from 'zustand';
 
-import { Station } from '@/features/search/types/station.types';
-import { GenderConstraint } from '@/features/fleets/types/fleet.types';
 import { getFleetsDelays } from '@/config/delays.variables';
+import { GenderConstraint } from '@/features/fleets/types/fleet.types';
+import { Line } from '@/features/search/types/line.types';
+import { Station } from '@/features/search/types/station.types';
 import { isEnvFlagTrue } from '@/utils/env';
+
+export type TripSelectionContextStationFields = Extract<
+  keyof ITripSelectionContext,
+  'startStation' | 'endStation'
+>;
+
+export type TripSelectionContextLineFields = Extract<
+  keyof ITripSelectionContext,
+  'startLine' | 'endLine'
+>;
 
 type PartialITripSelectionContext = Partial<ITripSelectionContext>;
 
 type ITripSelectionContext = {
+  startLine: Line | null;
+  endLine: Line | null;
   startStation: Station | null;
   endStation: Station | null;
   departureTime: Date;
@@ -15,10 +28,8 @@ type ITripSelectionContext = {
   gatheringDelay: number;
   fleetName: string;
   isFilled: () => boolean;
-  updateStations: (selectedStation: Station) => void;
   updateFleet: (field: PartialITripSelectionContext) => void;
   swapStations: () => void;
-  resetStations: () => void;
 };
 
 const { MIN_FORMATION_DELAY, MIN_GATHERING_DELAY } = getFleetsDelays(
@@ -45,42 +56,16 @@ export const useTripSelectionStore = create<ITripSelectionContext>(
       set(newFleetData);
     };
 
-    const updateStations = (selectedStation: Station) => {
-      const { startStation, endStation } = get();
-
-      if (startStation) {
-        if (startStation.id === selectedStation.id) {
-          if (endStation) {
-            set({ startStation: endStation, endStation: null });
-            return;
-          }
-
-          set({ startStation: null });
-
-          return;
-        }
-
-        if (endStation && endStation.id === selectedStation.id) {
-          set({ endStation: null });
-          return;
-        }
-
-        set({ endStation: selectedStation });
-        return;
-      }
-
-      set({ startStation: selectedStation });
-    };
-
     const swapStations = () => {
-      const { startStation, endStation } = get();
+      const { startStation, endStation, startLine, endLine } = get();
 
-      if (startStation && endStation) {
-        set({ startStation: endStation, endStation: startStation });
-      }
+      set({
+        startStation: endStation,
+        startLine: endLine,
+        endStation: startStation,
+        endLine: startLine,
+      });
     };
-
-    const resetStations = () => set({ startStation: null, endStation: null });
 
     const initDepartureTime = () => {
       const currentDate = new Date();
@@ -92,16 +77,16 @@ export const useTripSelectionStore = create<ITripSelectionContext>(
 
     return {
       departureTime: initDepartureTime(),
+      startLine: null,
+      endLine: null,
       startStation: null,
       endStation: null,
       genderConstraint: GenderConstraint.NO_CONSTRAINT,
       gatheringDelay: MIN_GATHERING_DELAY,
       fleetName: '',
       isFilled,
-      updateStations,
       updateFleet,
       swapStations,
-      resetStations,
     };
   },
 );

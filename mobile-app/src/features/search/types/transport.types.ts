@@ -1,14 +1,8 @@
-export enum TransportMode {
-  RAIL = 'rail',
-  METRO = 'metro',
-  TRAM = 'tram',
-  // BUS = 'bus',
-  // FUNICULAR = 'funicular',
-}
+import {
+  TRANSPORT_MODE,
+  TRANSPORT_SUB_MODE,
+} from '@/features/search/constants/mappings.transport';
+import { ConstantValues } from '@/types/utils';
 
-export enum TransportSubMode {
-  REGIONAL_RAIL = 'regionalRail',
-  SUBURBAN_RAILWAY = 'suburbanRailway',
-  LOCAL = 'local',
-  RAIL_SHUTTLE = 'railShuttle',
-}
+export type TransportMode = ConstantValues<typeof TRANSPORT_MODE>;
+export type TransportSubMode = ConstantValues<typeof TRANSPORT_SUB_MODE>;
