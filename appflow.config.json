@@ -3,7 +3,7 @@
     {
       "appId": "bb9b8f9a",
       "root": "mobile-app",
-      "dependencyInstallCommand": "pnpm install",
+      "dependencyInstallCommand": "pnpm install --filter mobile-app",
       "webBuildCommand": "pnpm run build",
       "iosPath": "ios",
       "androidPath": "android"
